@@ -562,6 +562,60 @@
     .compare-picker-item-meta { font-size: 11px; font-weight: 700; opacity: 0.7; }
 
     /* ---------------------------------------------------------
+       MODAL DE PRODUCTO (ventana emergente al tocar una tarjeta)
+       --------------------------------------------------------- */
+    .product-modal-overlay {
+      position: fixed; inset: 0; background: rgba(10,10,10,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 80; padding: 16px;
+    }
+    .product-modal-overlay[hidden] { display: none; }
+
+    .product-modal-box {
+      background: var(--bg); width: 100%; max-width: 480px;
+      max-height: 90vh; display: flex; flex-direction: column;
+      box-shadow: 8px 8px 0 var(--black);
+    }
+    .product-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 4px solid var(--black); background: var(--yellow);
+      flex-shrink: 0;
+    }
+    .product-modal-title { font-size: 22px; line-height: 1; }
+    .product-modal-close {
+      width: 32px; height: 32px; background: var(--black); color: white;
+      border: 2px solid var(--black); font-weight: 900; cursor: pointer; flex-shrink: 0;
+      font-size: 16px;
+    }
+    .product-modal-body {
+      overflow-y: auto; padding: 20px 16px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .product-modal-main .product-card { cursor: default; }
+    .product-modal-main .product-card:hover { transform: none; }
+    .product-modal-main .product-card--big .product-visual { height: 260px; }
+    .product-modal-main .product-card--big .product-visual-img { max-height: 250px; }
+    .product-modal-main .product-card--big .product-name { font-size: clamp(26px, 8vw, 36px); }
+
+    .product-modal-others-label {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+      background: var(--black); color: var(--yellow); padding: 4px 12px;
+      width: fit-content; transform: rotate(-1deg);
+    }
+    .product-modal-others {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .product-modal-others .product-card { cursor: default; }
+    .product-modal-others .product-card:hover { transform: none; }
+
+    .product-modal-variant-color {
+      text-align: center; font-size: 11px; font-weight: 900;
+      background: white; border: 2px solid var(--black);
+      padding: 2px 8px; width: fit-content; margin: 8px auto 0;
+    }
+
+    /* ---------------------------------------------------------
        RESEÑAS
        --------------------------------------------------------- */
     .reviews { max-width: 1400px; margin: 0 auto; padding: 0 24px 48px; }
@@ -1055,6 +1109,17 @@
     </div>
   </div>
 
+  <!-- ===================== VENTANA EMERGENTE DE PRODUCTO ===================== -->
+  <div id="product-modal-overlay" class="product-modal-overlay" hidden>
+    <div class="product-modal-box brutal">
+      <div class="product-modal-header">
+        <div class="bebas product-modal-title" id="product-modal-title">EQUIPO</div>
+        <button class="product-modal-close" id="product-modal-close" type="button">✕</button>
+      </div>
+      <div id="product-modal-body" class="product-modal-body"></div>
+    </div>
+  </div>
+
   <!-- ===================== RESEÑAS ===================== -->
   <section class="reviews">
     <div class="reviews-grid">
@@ -1187,7 +1252,7 @@
         cameraMain: 50, cameraFull: "50+13MP · OIS", front: 32,
         resistance: "IP68", charge: "68W", network: "5G", os: "Android 15",
         variants: [
-          { color: "gris", colorName: "GRIS", hex: "#5B5B66", stock: 1, price: 8999, image: "Motorola-Edge-60-Fusion-256GB-Gris.png" },
+          { color: "gris", colorName: "GRIS", hex: "#5B5B66", stock: 1, price: 8999, image: "Motorola-Edge-60%20Fusion-256GB-Gris.png" },
         ],
       },
       {
@@ -1336,6 +1401,11 @@
       colorPickerList: document.getElementById("color-picker-list"),
       colorPickerClose: document.getElementById("color-picker-close"),
 
+      productModalOverlay: document.getElementById("product-modal-overlay"),
+      productModalTitle: document.getElementById("product-modal-title"),
+      productModalBody: document.getElementById("product-modal-body"),
+      productModalClose: document.getElementById("product-modal-close"),
+
       ratingStars: document.getElementById("rating-stars"),
       ratingFeedback: document.getElementById("rating-feedback"),
 
@@ -1448,7 +1518,12 @@
         const id = card.dataset.id;
         const product = PRODUCTS.find((p) => p.id === id);
 
-        card.querySelector(".add-to-cart-btn").addEventListener("click", () => handleAddToCart(product));
+        card.querySelector(".add-to-cart-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleAddToCart(product);
+        });
+
+        card.addEventListener("click", () => openProductModal(product));
       });
 
       observeReveals(el.catalogSections);
@@ -1459,10 +1534,6 @@
       const mainVariant = p.variants[0];
       const multiColor = p.variants.length > 1;
       const anyBait = p.variants.some((v) => v.bait);
-
-      const colorInfoHTML = multiColor
-        ? `<div class="product-color-name">COLORES: ${p.variants.map((v) => v.colorName).join(", ")}</div>`
-        : `<div class="product-color-name">${mainVariant.colorName}${mainVariant.stock > 1 ? ` · DISPONIBLES: ${mainVariant.stock}` : ""}</div>`;
 
       const colorDotsHTML = p.variants.map((v) => `<span class="color-dot" style="background:${v.hex}" title="${v.colorName}${v.bait ? " (BAIT)" : ""}"></span>`).join("");
 
@@ -1490,7 +1561,6 @@
                 </div>
               </div>
             </div>
-            ${colorInfoHTML}
             ${multiColor ? `<div class="color-dots">${colorDotsHTML}</div>` : ""}
           </div>
 
@@ -1763,6 +1833,102 @@
     el.colorPickerClose.addEventListener("click", closeColorPicker);
     el.colorPickerOverlay.addEventListener("click", (e) => {
       if (e.target === el.colorPickerOverlay) closeColorPicker();
+    });
+
+    // ==================================================================
+    // VENTANA EMERGENTE DE PRODUCTO (al tocar cualquier tarjeta del catálogo)
+    // ==================================================================
+
+    // Tarjeta individual dentro del modal, para una variante (color) específica.
+    // Es igual a la tarjeta del catálogo pero sin texto de color sobrepuesto
+    // en la imagen: el color se muestra debajo del nombre, en texto normal.
+    function productModalCardHTML(p, variant, big = false) {
+      return `
+        <div class="product-card${big ? " product-card--big" : ""}">
+          <div class="product-card-top">
+            <span class="product-tag">${p.tag}</span>
+            ${variant.bait ? `<span class="product-tag product-tag-bait">BAIT</span>` : ""}
+          </div>
+
+          <div class="product-visual">
+            <img
+              class="product-visual-img"
+              src="${variant.image}"
+              alt="${p.name} ${variant.colorName}"
+              loading="lazy"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <div class="product-visual-fallback" style="display:none; background:${variant.hex}">
+              <div class="product-visual-phone" style="background:${variant.hex}">
+                <div class="product-visual-notch"></div>
+                <div class="product-visual-label">${shortModelLabel(p.name)}</div>
+                <div class="product-visual-grid">
+                  <div></div><div class="dark"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="bebas product-name">${p.name}</h3>
+          <div class="product-modal-variant-color">${variant.colorName}${variant.stock > 1 ? ` · DISPONIBLES: ${variant.stock}` : ""}</div>
+          <div class="product-badges">
+            <span class="badge badge-yellow">${p.size.toUpperCase()}</span>
+            <span class="badge badge-pink">${p.network}</span>
+          </div>
+
+          <ul class="product-specs">
+            ${productSpecsList(p).map((s) => `<li><span class="bullet">•</span>${s}</li>`).join("")}
+          </ul>
+
+          <div class="product-footer">
+            <div>
+              <div class="product-currency">MXN</div>
+              <div class="bebas product-price">${money(variant.price)}</div>
+            </div>
+            <button class="add-to-cart-btn" data-vid="${variantId(p, variant)}">AGREGAR <span class="plus">+</span></button>
+          </div>
+        </div>
+      `;
+    }
+
+    function openProductModal(product) {
+      el.productModalTitle.textContent = product.name;
+
+      const mainVariant = product.variants[0];
+      const otherVariants = product.variants.slice(1);
+
+      let bodyHTML = `<div class="product-modal-main">${productModalCardHTML(product, mainVariant, true)}</div>`;
+
+      if (otherVariants.length > 0) {
+        bodyHTML += `
+          <div class="product-modal-others-label">MÁS COLORES</div>
+          <div class="product-modal-others">
+            ${otherVariants.map((v) => productModalCardHTML(product, v)).join("")}
+          </div>
+        `;
+      }
+
+      el.productModalBody.innerHTML = bodyHTML;
+
+      // Enganchamos "agregar" de cada tarjeta del modal a su variante exacta
+      el.productModalBody.querySelectorAll(".add-to-cart-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const vid = btn.dataset.vid;
+          const variant = product.variants.find((v) => variantId(product, v) === vid);
+          addToCart(product, variant);
+        });
+      });
+
+      el.productModalOverlay.hidden = false;
+    }
+
+    function closeProductModal() {
+      el.productModalOverlay.hidden = true;
+    }
+
+    el.productModalClose.addEventListener("click", closeProductModal);
+    el.productModalOverlay.addEventListener("click", (e) => {
+      if (e.target === el.productModalOverlay) closeProductModal();
     });
 
     // ==================================================================
