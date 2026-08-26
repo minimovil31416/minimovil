@@ -116,7 +116,7 @@
     .search-overlay {
       position: fixed; inset: 0; background: rgba(10,10,10,0.6);
       display: flex; align-items: flex-start; justify-content: center;
-      z-index: 70; padding: 16px;
+      z-index: 70; padding: 16px; overscroll-behavior: contain;
     }
     .search-overlay[hidden] { display: none; }
 
@@ -144,7 +144,7 @@
     .search-input:focus { outline: none; box-shadow: 3px 3px 0 var(--pink); }
     .search-input::placeholder { color: rgba(10,10,10,0.4); font-weight: 700; }
 
-    .search-suggestions { overflow-y: auto; padding: 8px; }
+    .search-suggestions { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
     .search-suggestion-item {
       width: 100%; display: flex; align-items: center; gap: 12px;
       background: white; border: 3px solid var(--black); margin-bottom: 8px;
@@ -537,7 +537,7 @@
     .compare-picker-overlay {
       position: fixed; inset: 0; background: rgba(10,10,10,0.6);
       display: flex; align-items: center; justify-content: center;
-      z-index: 60; padding: 20px;
+      z-index: 60; padding: 20px; overscroll-behavior: contain;
     }
     .compare-picker-overlay[hidden] { display: none; }
     .compare-picker-box {
@@ -554,7 +554,7 @@
       width: 28px; height: 28px; background: var(--black); color: white;
       border: 2px solid var(--black); font-weight: 900; cursor: pointer;
     }
-    .compare-picker-list { overflow-y: auto; padding: 8px; }
+    .compare-picker-list { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
     .compare-picker-item {
       width: 100%; display: flex; align-items: center; gap: 12px;
       background: white; border: 3px solid var(--black); margin-bottom: 8px;
@@ -575,7 +575,7 @@
     .product-modal-overlay {
       position: fixed; inset: 0; background: rgba(10,10,10,0.7);
       display: flex; align-items: center; justify-content: center;
-      z-index: 80; padding: 16px;
+      z-index: 80; padding: 16px; overscroll-behavior: contain;
     }
     .product-modal-overlay[hidden] { display: none; }
 
@@ -596,7 +596,7 @@
       font-size: 16px;
     }
     .product-modal-body {
-      overflow-y: auto; padding: 20px 16px 24px;
+      overflow-y: auto; overscroll-behavior: contain; padding: 20px 16px 24px;
       display: flex; flex-direction: column; gap: 20px;
     }
 
@@ -698,7 +698,7 @@
     .cart-panel-header { display: flex; justify-content: space-between; align-items: center; }
     .btn-clear-small { font-size: 10px; font-weight: 900; border: 2px solid var(--black); background: white; padding: 4px 8px; cursor: pointer; }
 
-    .cart-items { margin-top: 12px; max-height: 220px; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+    .cart-items { margin-top: 12px; max-height: 220px; overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
     .cart-item { display: flex; gap: 8px; align-items: center; border: 2px solid var(--black); background: var(--bg); padding: 8px; }
     .cart-item-swatch { width: 40px; height: 40px; border: 2px solid var(--black); flex-shrink: 0; }
     .cart-item-info { flex: 1; }
