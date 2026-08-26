@@ -2371,7 +2371,7 @@
       const mainVariant = product.variants[0];
       const otherVariants = product.variants.slice(1);
 
-      let bodyHTML = `<div class="product-modal-main">${productModalCardHTML(product, mainVariant, true)}</div>`;
+      let bodyHTML = `<div class="product-modal-main">${productModalCardHTML(product, mainVariant)}</div>`;
 
       if (otherVariants.length > 0) {
         bodyHTML += `
