@@ -440,6 +440,12 @@
     .product-specs { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
     .product-specs li { display: flex; gap: 6px; font-size: 12px; line-height: 1.2; }
     .product-specs .bullet { font-weight: 900; }
+    .product-specs-extended { margin: 14px 0 0; padding: 0; border: 2px solid var(--black); border-radius: 8px; overflow: hidden; }
+    .product-specs-extended-row { display: flex; justify-content: space-between; gap: 10px; padding: 7px 10px; font-size: 12px; line-height: 1.3; border-bottom: 1px solid var(--black); background: white; }
+    .product-specs-extended-row:last-child { border-bottom: none; }
+    .product-specs-extended-row:nth-child(even) { background: var(--bg); }
+    .product-specs-extended-label { font-weight: 900; opacity: 0.65; flex-shrink: 0; }
+    .product-specs-extended-value { text-align: right; font-weight: 700; }
 
     .product-footer { margin-top: auto; padding-top: 16px; display: flex; align-items: center; justify-content: space-between; }
     .product-currency { font-size: 11px; font-weight: 900; }
@@ -1905,6 +1911,22 @@
     const money = (n) => "$" + n.toLocaleString("es-MX");
 
     // ==================================================================
+    // BLOQUEO DE SCROLL DE FONDO — evita que la página principal se mueva
+    // mientras hay una ventana emergente abierta (buscador, ficha de
+    // producto, selector de color, comparador, carrito). Usa un contador
+    // por si dos overlays llegaran a coincidir abiertos al mismo tiempo.
+    // ==================================================================
+    let scrollLockCount = 0;
+    function lockBodyScroll() {
+      scrollLockCount++;
+      document.body.style.overflow = "hidden";
+    }
+    function unlockBodyScroll() {
+      scrollLockCount = Math.max(0, scrollLockCount - 1);
+      if (scrollLockCount === 0) document.body.style.overflow = "";
+    }
+
+    // ==================================================================
     // 1) CATÁLOGO — pintar tarjetas de producto según los filtros activos
     // ==================================================================
 
@@ -1920,6 +1942,24 @@
         `${p.ram}GB + ${p.storage}GB · ${p.processor}`,
         `${p.screen} · ${p.refreshRate}Hz · ${p.network}`,
         `Cám. ${p.cameraFull} · ${p.resistance}`,
+      ];
+    }
+
+    // Ficha técnica completa (usada en la ventana emergente del producto):
+    // cada renglón por separado, como la tablita del comparador.
+    function productSpecsExtended(p) {
+      return [
+        { label: "PROCESADOR", value: p.processor },
+        { label: "RAM", value: `${p.ram} GB` },
+        { label: "ALMACENAMIENTO", value: `${p.storage} GB` },
+        { label: "BATERÍA", value: p.batteryMah ? `${p.batteryMah} mAh${p.charge && p.charge !== "—" ? ` · carga ${p.charge}` : ""}` : (p.battery || "—") },
+        { label: "PANTALLA", value: `${p.screen} · ${p.refreshRate}Hz` },
+        { label: "CÁMARA TRASERA", value: p.cameraFull },
+        { label: "CÁMARA FRONTAL", value: `${p.front} MP` },
+        { label: "RESISTENCIA", value: p.resistance || "—" },
+        { label: "RED", value: p.network },
+        { label: "SISTEMA", value: p.os },
+        { label: "COMPAÑÍA", value: p.company || "—" },
       ];
     }
 
@@ -2078,6 +2118,7 @@
     function openSearch() {
       el.searchOverlay.hidden = false;
       el.searchToggleBtn.classList.add("active");
+      lockBodyScroll();
       // pequeño delay para que el navegador ya haya pintado el input antes de enfocarlo
       // (así el teclado del celular aparece de forma confiable)
       setTimeout(() => el.searchInput.focus(), 50);
@@ -2089,6 +2130,7 @@
       el.searchInput.value = "";
       el.searchSuggestions.hidden = true;
       el.searchSuggestions.innerHTML = "";
+      unlockBodyScroll();
       state.filters.search = "";
       renderCatalog();
     }
@@ -2137,23 +2179,12 @@
     }
 
     function selectSearchSuggestion(product) {
-      state.filters.search = product.name;
-      renderCatalog();
+      // Cerramos la búsqueda por completo (limpia el texto y el filtro) para que
+      // el catálogo no quede "atorado" mostrando solo este producto después.
+      closeSearch();
 
-      // Cerramos el modal sin limpiar el filtro (a diferencia del botón ✕)
-      el.searchOverlay.hidden = true;
-      el.searchToggleBtn.classList.remove("active");
-      el.searchSuggestions.hidden = true;
-      el.searchInput.value = product.name;
-
-      requestAnimationFrame(() => {
-        document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
-        const card = el.catalogSections.querySelector(`[data-id="${product.id}"]`);
-        if (card) {
-          card.classList.add("flash-highlight");
-          setTimeout(() => card.classList.remove("flash-highlight"), 1100);
-        }
-      });
+      // Abrimos la ficha del producto, igual que si se hubiera tocado su tarjeta.
+      openProductModal(product);
     }
 
     el.searchToggleBtn.addEventListener("click", () => {
@@ -2258,11 +2289,13 @@
     function openCartPanel() {
       el.cartPanel.hidden = false;
       el.cartFab.hidden = true;
+      lockBodyScroll();
     }
 
     function closeCartPanel() {
       el.cartPanel.hidden = true;
       el.cartFab.hidden = cartCount() === 0;
+      unlockBodyScroll();
     }
 
     el.cartToggleBtn.addEventListener("click", () => {
@@ -2298,10 +2331,12 @@
       });
 
       el.colorPickerOverlay.hidden = false;
+      lockBodyScroll();
     }
 
     function closeColorPicker() {
       el.colorPickerOverlay.hidden = true;
+      unlockBodyScroll();
     }
 
     el.colorPickerClose.addEventListener("click", closeColorPicker);
@@ -2350,9 +2385,14 @@
             <span class="badge badge-pink">${p.network}</span>
           </div>
 
-          <ul class="product-specs">
-            ${productSpecsList(p).map((s) => `<li><span class="bullet">•</span>${s}</li>`).join("")}
-          </ul>
+          <div class="product-specs-extended">
+            ${productSpecsExtended(p).map((s) => `
+              <div class="product-specs-extended-row">
+                <span class="product-specs-extended-label">${s.label}</span>
+                <span class="product-specs-extended-value">${s.value}</span>
+              </div>
+            `).join("")}
+          </div>
 
           <div class="product-footer">
             <div>
@@ -2394,10 +2434,12 @@
       });
 
       el.productModalOverlay.hidden = false;
+      lockBodyScroll();
     }
 
     function closeProductModal() {
       el.productModalOverlay.hidden = true;
+      unlockBodyScroll();
     }
 
     el.productModalClose.addEventListener("click", closeProductModal);
@@ -2437,10 +2479,12 @@
       });
 
       el.comparePickerOverlay.hidden = false;
+      lockBodyScroll();
     }
 
     function closeComparePicker() {
       el.comparePickerOverlay.hidden = true;
+      unlockBodyScroll();
       compareTargetSlot = null;
     }
 
