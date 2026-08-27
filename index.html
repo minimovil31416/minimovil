@@ -2656,70 +2656,114 @@
       return m ? parseInt(m[1], 10) : null;
     }
 
-    // --- Regla específica para procesadores Apple (iPhone) ---------------
-    // El algoritmo general compara el renglón "PROCESADOR" y el ganador
-    // general usando el "rank" del catálogo (funciona bien entre equipos
-    // Android, que es como está pensado). El problema es que ese "rank" es
-    // solo el orden/prioridad con el que el celular aparece en la tienda,
-    // no un indicador real del chip — y como los iPhone quedaron con un
-    // rank alto (más al fondo del catálogo, en la sección Telcel), siempre
-    // "perdían" el renglón de procesador contra equipos de gama media aunque
-    // el chip A15 Bionic en la práctica rinda mejor.
+    // --- Ranking real de procesadores (renglón PROCESADOR + GANADOR GENERAL) ---
+    // Antes este renglón se decidía comparando el "rank" del catálogo (el
+    // orden/prioridad con el que el celular aparece en la tienda), lo cual
+    // no es un indicador real de qué tan bueno es el chip — por eso a veces
+    // ganaba un equipo que en la práctica tiene un procesador más flojo,
+    // solo por estar mejor posicionado en el catálogo.
     //
-    // Para no tocar el algoritmo Android (que sí funciona), a los Apple les
-    // asignamos aquí una puntuación fija por modelo de chip (0–100, según
-    // benchmarks reales publicados), en vez de inferirla de núcleos/GHz/rank.
-    // Para agregar un iPhone nuevo más adelante, solo hay que sumar su chip
-    // a esta tabla.
-    const APPLE_CHIP_SCORE = {
-      "Apple A15 Bionic": 78, // iPhone 13 y 14 — sigue siendo muy competitivo hoy
-      // "Apple A16 Bionic": 85,
-      // "Apple A17 Pro": 90,
+    // Esta tabla usa el ranking real de rendimiento que investigaste
+    // (5 niveles, de gama alta a gama de entrada) y le asigna a cada equipo
+    // del catálogo una puntuación fija según su chip real, sin importar su
+    // posición/prioridad en la tienda. Está indexada por el "id" del
+    // producto (no por el texto del procesador) porque varios equipos
+    // repetidos en distintas vitrinas (ej. Telcel) tienen el campo
+    // "processor" escrito de forma genérica ("Octa-Core") sin nombre de
+    // chip, así que el id es la forma confiable de identificarlos.
+    //
+    // Para agregar un equipo nuevo al catálogo más adelante, solo hay que
+    // sumar su id aquí con la puntuación que le corresponda según su chip.
+    const PRODUCT_CHIP_SCORE = {
+      // 🏆 Nivel 1 — Gama alta / premium
+      "s24fe": 92,          // Galaxy S24 FE 5G · Exynos 2400e
+      "iphone14-telcel": 88, // iPhone 14 · Apple A15 Bionic (leve ventaja gráfica sobre el 13)
+      "iphone13-telcel": 87, // iPhone 13 · Apple A15 Bionic
+
+      // ⚡ Nivel 2 — Gama media-alta
+      "a57": 80,             // Galaxy A57 5G · Exynos 1680
+      "a56": 78,             // Galaxy A56 5G · Exynos 1580
+      "a56-telcel": 78,
+      "redmi-note15-pro-5g": 76, // Redmi Note 15 Pro 5G · Dimensity 7400-Ultra
+      "edge60": 74,          // Edge 60 Fusion · Dimensity 7300
+      "moto-g86": 74,        // Moto G86 5G · Dimensity 7300
+      "moto-g86-curva": 74,
+      "a37": 72,             // Galaxy A37 5G
+      "a36-telcel": 72,      // Galaxy A36 5G
+      "a55-telcel": 70,      // Galaxy A55 5G · Exynos 1480
+
+      // ⚖️ Nivel 3 — Gama media estándar
+      "a26": 62,             // Galaxy A26 5G · Exynos 1380
+      "a26-telcel": 62,
+      "a35-telcel": 62,      // Galaxy A35 5G · Exynos 1380
+      "redmi-note15-pro": 58, // Redmi Note 15 Pro (4G) · Helio G99 / Snapdragon 685 modificado
+      "redmi-note14": 55,    // Redmi Note 14 4G · Snapdragon 685
+      "redmi15": 55,         // Redmi 15 4G · Snapdragon 685
+      "redmi15-lte": 55,
+      "redmi-15-256gb-telcel": 55,
+
+      // 📉 Nivel 4 — Gama de entrada
+      "zte-axon70": 48,      // Axon 70 · Unisoc T616
+      "a17-5g-telcel": 46,   // Galaxy A17 5G / A16 5G · Exynos económicos
+      "a16-telcel": 46,
+      "oppo-a40-telcel": 44, // Oppo A40 · Snapdragon 4 Gen 1
+      "a17": 42,             // Galaxy A17 4G / A17 · Helio G85/G88 o equivalente
+      "a17-4g-telcel": 42,
+      "redmi13x": 40,        // Redmi 13X · Helio G91-Ultra
+      "g17power": 38,        // Moto G17 Power · Helio G81 Extreme/Ultra
+      "moto-g06": 38,        // Moto G06 (128/256GB)
+      "moto-g06-128gb-telcel": 38,
+      "moto-g15": 38,        // Moto G15
+      "redmi15c": 38,        // Redmi 15C
+      "redmi-15c-256gb-telcel": 38,
+      "redmi-15c-128gb-telcel": 38,
+      "moto-g06-64gb-telcel": 34, // Moto G06 64GB / Redmi A7 Pro
+      "redmi-a7-pro": 34,
+
+      // 🐢 Nivel 5 — Los más lentos
+      "a07": 26,              // Galaxy A07 (5G/LTE/64GB)
+      "a07-lte": 26,
+      "a07-telcel": 26,
+      "redmi-a5": 22,         // Redmi A5 / ZTE Blade V70 / V70 Max / Blade A35E
+      "redmi-a5-64gb-telcel": 22,
+      "redmi-a5-128gb-telcel": 22,
+      "zte-blade-v70": 22,
+      "zte-blade-v70-max-telcel": 22,
+      "zte-blade-a35e-telcel": 22,
+      "oppo-a5-telcel": 18,   // Oppo A5 / A6K / A6X
+      "oppo-a6k-256gb-telcel": 18,
+      "oppo-a6x-telcel": 18,
     };
 
-    // Si el producto es Apple y su chip está en la tabla (o es un Apple no
-    // listado todavía), regresa su puntuación fija. Si no es Apple, regresa
-    // null para indicar "usa el cálculo normal de Android".
-    function appleChipScore(product) {
-      if (!product.processor || !product.processor.includes("Apple")) return null;
-      const knownChip = Object.keys(APPLE_CHIP_SCORE).find((chip) => product.processor.includes(chip));
-      return knownChip ? APPLE_CHIP_SCORE[knownChip] : 70; // valor conservador si el chip Apple aún no está en la tabla
+    // Puntuación fija del chip real de un producto (o null si algún día se
+    // agrega un equipo al catálogo y aún no se le asigna puntuación arriba).
+    function chipScore(product) {
+      return PRODUCT_CHIP_SCORE[product.id] ?? null;
     }
 
-    // Solo para poder comparar la puntuación fija de Apple contra un equipo
-    // Android, re-expresamos el "rank" de ese Android (sin cambiar cómo se
-    // calcula) en la misma escala de 0–100 que usa la tabla de Apple.
-    function rankAsScore(rank) {
-      if (MAX_RANK <= 1) return 100;
-      return 100 - ((rank - 1) / (MAX_RANK - 1)) * 100;
-    }
-
-    // Ganador del renglón PROCESADOR. Si ninguno de los dos es Apple, se
-    // comporta exactamente igual que antes (rank más bajo gana). Si alguno
-    // es Apple, usa la puntuación fija en vez del rank de catálogo.
+    // Ganador del renglón PROCESADOR: compara por puntuación real de chip.
+    // Si por alguna razón algún equipo no está en la tabla todavía, no
+    // adivinamos su rendimiento — usamos el rank de catálogo solo como
+    // último recurso para ese caso puntual.
     function processorWinner(a, b) {
-      const appleA = appleChipScore(a);
-      const appleB = appleChipScore(b);
-      if (appleA === null && appleB === null) {
-        return specWinner(a.rank, b.rank, false);
+      const scoreA = chipScore(a);
+      const scoreB = chipScore(b);
+      if (scoreA != null && scoreB != null) {
+        if (scoreA === scoreB) return null;
+        return scoreA > scoreB ? "a" : "b";
       }
-      const scoreA = appleA ?? rankAsScore(a.rank);
-      const scoreB = appleB ?? rankAsScore(b.rank);
-      if (scoreA === scoreB) return null;
-      return scoreA > scoreB ? "a" : "b";
+      return specWinner(a.rank, b.rank, false);
     }
 
     // Mismo criterio que processorWinner, pero para el "GANADOR GENERAL".
     function overallWinner(a, b) {
-      const appleA = appleChipScore(a);
-      const appleB = appleChipScore(b);
-      if (appleA === null && appleB === null) {
-        return a.rank < b.rank ? a : b.rank < a.rank ? b : null;
+      const scoreA = chipScore(a);
+      const scoreB = chipScore(b);
+      if (scoreA != null && scoreB != null) {
+        if (scoreA === scoreB) return null;
+        return scoreA > scoreB ? a : b;
       }
-      const scoreA = appleA ?? rankAsScore(a.rank);
-      const scoreB = appleB ?? rankAsScore(b.rank);
-      if (scoreA === scoreB) return null;
-      return scoreA > scoreB ? a : b;
+      return a.rank < b.rank ? a : b.rank < a.rank ? b : null;
     }
 
     function renderCompareTable(entryA, entryB) {
