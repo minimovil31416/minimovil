@@ -144,7 +144,14 @@
     .search-input:focus { outline: none; box-shadow: 3px 3px 0 var(--pink); }
     .search-input::placeholder { color: rgba(10,10,10,0.4); font-weight: 700; }
 
-    .search-suggestions { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
+    .search-suggestions {
+      overflow-y: auto; overscroll-behavior: contain; padding: 8px;
+      /* Alto fijo: así la caja no "salta" al escribir, sin importar si hay
+         0, 1 o 6 resultados. Si hay más contenido del que cabe, se hace scroll
+         adentro de este cuadro en vez de estirar todo el modal. */
+      height: min(360px, 50vh);
+      display: flex; flex-direction: column;
+    }
     .search-suggestion-item {
       width: 100%; display: flex; align-items: center; gap: 12px;
       background: white; border: 3px solid var(--black); margin-bottom: 8px;
@@ -158,7 +165,10 @@
     }
     .search-suggestion-name { font-weight: 900; font-size: 14px; line-height: 1.1; }
     .search-suggestion-meta { font-size: 11px; font-weight: 700; opacity: 0.7; }
-    .search-suggestion-empty { padding: 16px; text-align: center; font-weight: 700; font-size: 13px; opacity: 0.7; }
+    .search-suggestion-empty {
+      padding: 16px; text-align: center; font-weight: 700; font-size: 13px; opacity: 0.7;
+      flex: 1; display: flex; align-items: center; justify-content: center;
+    }
 
     .flash-highlight { animation: flashHighlight 1.1s ease; }
     @keyframes flashHighlight {
@@ -568,8 +578,17 @@
     .compare-picker-search-wrap .search-input { width: 100%; }
     .compare-picker-empty {
       text-align: center; padding: 24px 10px; font-weight: 700; opacity: 0.7;
+      flex: 1; display: flex; align-items: center; justify-content: center;
     }
     .compare-picker-list { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
+    /* Solo el selector de equipo del comparador tiene buscador, así que solo
+       este necesita alto fijo: evita que la caja "salte" al filtrar mientras
+       se escribe (con pocos o muchos resultados ocupa siempre el mismo alto).
+       El selector de color no tiene este problema porque su lista no cambia. */
+    #compare-picker-list {
+      height: min(360px, 50vh);
+      display: flex; flex-direction: column;
+    }
     .compare-picker-item {
       width: 100%; display: flex; align-items: center; gap: 12px;
       background: white; border: 3px solid var(--black); margin-bottom: 8px;
