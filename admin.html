@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MINI.MOVIL — Panel de administrador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFDF0;
+    --black: #0A0A0A;
+    --pink: #FF006B;
+    --yellow: #E5FF00;
+  }
+  * { box-sizing: border-box; font-family: 'Space Grotesk', system-ui, sans-serif; }
+  .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+  body { margin: 0; background: var(--bg); color: var(--black); }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 4px solid var(--black); background: white;
+  }
+  header .logo { font-size: 26px; }
+  header .logo span { background: var(--yellow); padding: 2px 6px; }
+  #logout-btn, .btn-secondary {
+    font-size: 12px; font-weight: 900; padding: 8px 14px; border: 2px solid var(--black);
+    background: white; cursor: pointer;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  /* ===== LOGIN ===== */
+  #login-view { max-width: 380px; margin: 60px auto; padding: 0 16px; }
+  #login-view h1 { font-size: 28px; margin-bottom: 4px; }
+  #login-view p { font-size: 13px; opacity: 0.7; margin-top: 0; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 900; margin-bottom: 4px; }
+  .field input, .field select, .field textarea {
+    width: 100%; font-size: 15px; padding: 10px; border: 2px solid var(--black);
+    background: white; font-family: inherit;
+  }
+  .btn-primary {
+    font-size: 15px; font-weight: 900; padding: 12px 20px; background: var(--pink);
+    color: white; border: none; cursor: pointer; width: 100%;
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  #login-error { color: var(--pink); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
+
+  /* ===== LISTA DE PRODUCTOS ===== */
+  .toolbar { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; align-items: center; }
+  .toolbar input[type="text"] { flex: 1; min-width: 180px; font-size: 14px; padding: 10px; border: 2px solid var(--black); }
+  .btn-add { background: var(--yellow); border: 2px solid var(--black); font-weight: 900; padding: 10px 16px; cursor: pointer; white-space: nowrap; }
+
+  .product-row {
+    display: flex; align-items: center; gap: 12px; padding: 10px; border: 2px solid var(--black);
+    margin-bottom: 8px; background: white;
+  }
+  .product-row img { width: 44px; height: 44px; object-fit: contain; border: 1px solid #ddd; background: var(--bg); flex-shrink: 0; }
+  .product-row .info { flex: 1; min-width: 0; }
+  .product-row .info .name { font-weight: 900; font-size: 14px; }
+  .product-row .info .meta { font-size: 12px; opacity: 0.65; }
+  .product-row .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-edit, .btn-delete {
+    font-size: 12px; font-weight: 900; padding: 7px 10px; border: 2px solid var(--black); cursor: pointer;
+  }
+  .btn-edit { background: white; }
+  .btn-delete { background: var(--pink); color: white; border-color: var(--pink); }
+
+  /* ===== FORMULARIO ===== */
+  #form-overlay {
+    position: fixed; inset: 0; background: rgba(10,10,10,0.6); z-index: 50;
+    display: flex; align-items: flex-start; justify-content: center; padding: 20px 12px;
+    overflow-y: auto;
+  }
+  #form-overlay[hidden] { display: none; }
+  #form-box {
+    background: var(--bg); border: 4px solid var(--black); max-width: 640px; width: 100%;
+    padding: 20px; margin: 10px 0 40px;
+  }
+  #form-box h2 { margin-top: 0; }
+  fieldset { border: 2px solid var(--black); margin-bottom: 16px; padding: 12px; }
+  legend { font-weight: 900; font-size: 12px; padding: 0 6px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .variant-row {
+    border: 2px dashed var(--black); padding: 10px; margin-bottom: 10px; position: relative;
+  }
+  .variant-row .remove-variant-btn {
+    position: absolute; top: 6px; right: 6px; background: var(--pink); color: white; border: none;
+    width: 24px; height: 24px; cursor: pointer; font-weight: 900;
+  }
+  .btn-add-variant {
+    background: white; border: 2px dashed var(--black); font-weight: 900; padding: 10px; width: 100%; cursor: pointer;
+  }
+  .image-mode-toggle { display: flex; gap: 6px; margin-bottom: 6px; }
+  .image-mode-toggle button {
+    flex: 1; font-size: 11px; font-weight: 900; padding: 6px; border: 2px solid var(--black); background: white; cursor: pointer;
+  }
+  .image-mode-toggle button.active { background: var(--yellow); }
+  .image-preview { width: 60px; height: 60px; object-fit: contain; border: 1px solid #ddd; margin-top: 6px; background: white; display: none; }
+  .upload-status { font-size: 11px; font-weight: 700; margin-top: 4px; }
+
+  .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .form-actions .btn-primary { flex: 1; }
+  .btn-cancel { flex: 1; background: white; border: 2px solid var(--black); font-weight: 900; cursor: pointer; }
+
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--black); color: var(--yellow); padding: 12px 20px; font-weight: 900;
+    z-index: 100; display: none; max-width: 90vw; text-align: center;
+  }
+
+  #loading-msg { text-align: center; padding: 60px 16px; font-weight: 700; opacity: 0.7; }
+  small.help { display: block; font-size: 11px; opacity: 0.6; margin-top: 3px; font-weight: 400; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="bebas logo">MINI<span>.MOVIL</span> — ADMIN</div>
+    <button id="logout-btn" hidden>Cerrar sesión</button>
+  </header>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="login-view">
+    <h1 class="bebas">PANEL DE ADMINISTRADOR</h1>
+    <p>Inicia sesión con tu cuenta de administrador para agregar, editar o eliminar celulares.</p>
+    <div class="field">
+      <label for="login-email">Correo</label>
+      <input type="email" id="login-email" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label for="login-password">Contraseña</label>
+      <input type="password" id="login-password" autocomplete="current-password" />
+    </div>
+    <button class="btn-primary" id="login-btn">Iniciar sesión</button>
+    <div id="login-error"></div>
+  </div>
+
+  <!-- ===================== ADMIN ===================== -->
+  <main id="admin-view" hidden>
+    <div class="toolbar">
+      <input type="text" id="search-input" placeholder="🔍 Buscar celular..." />
+      <button class="btn-add" id="btn-new-product">+ AGREGAR CELULAR</button>
+    </div>
+    <div id="product-list"></div>
+  </main>
+
+  <div id="loading-msg" hidden>Cargando...</div>
+
+  <!-- ===================== FORMULARIO (agregar / editar) ===================== -->
+  <div id="form-overlay" hidden>
+    <div id="form-box">
+      <h2 class="bebas" id="form-title">AGREGAR CELULAR</h2>
+      <form id="product-form">
+
+        <fieldset>
+          <legend>INFORMACIÓN GENERAL</legend>
+          <div class="field">
+            <label for="f-name">Nombre completo *</label>
+            <input type="text" id="f-name" required placeholder="Ej. SAMSUNG GALAXY A57 5G 256GB" />
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="f-vitrina">Vitrina *</label>
+              <select id="f-vitrina" required></select>
+            </div>
+            <div class="field" id="f-vitrina-new-wrap" hidden>
+              <label for="f-vitrina-new">Nombre de la vitrina nueva</label>
+              <input type="text" id="f-vitrina-new" placeholder="ej. vitrina3-telcel" />
+            </div>
+            <div class="field">
+              <label for="f-company">Compañía *</label>
+              <input type="text" id="f-company" required placeholder="Ej. Telcel" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f-tag">Etiqueta</label>
+              <select id="f-tag">
+                <option>NUEVO</option>
+                <option>ENTRADA</option>
+                <option>PRO</option>
+                <option>PREMIUM</option>
+                <option>TOP GAMA</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-size">Tamaño de tarjeta</label>
+              <select id="f-size">
+                <option value="nano">Nano (chico)</option>
+                <option value="mini">Mini (mediano)</option>
+                <option value="ultra">Ultra (grande)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-network">Red *</label>
+              <input type="text" id="f-network" required placeholder="Ej. 5G / 4G LTE" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>CARACTERÍSTICAS</legend>
+          <div class="field">
+            <label for="f-processor">Procesador *</label>
+            <input type="text" id="f-processor" required placeholder="Ej. Exynos 1680 · Octa-Core · hasta 2.9 GHz" />
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f-ram">RAM (GB) *</label>
+              <input type="number" id="f-ram" required min="1" />
+            </div>
+            <div class="field">
+              <label for="f-storage">Almacenamiento (GB) *</label>
+              <input type="number" id="f-storage" required min="1" />
+            </div>
+            <div class="field">
+              <label for="f-batteryMah">Batería (mAh)</label>
+              <input type="number" id="f-batteryMah" min="0" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="f-screen">Pantalla *</label>
+              <input type="text" id="f-screen" required placeholder='Ej. 6.7" Super AMOLED' />
+            </div>
+            <div class="field">
+              <label for="f-refreshRate">Frecuencia (Hz) *</label>
+              <input type="number" id="f-refreshRate" required min="30" />
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label for="f-cameraFull">Cámara trasera *</label>
+              <input type="text" id="f-cameraFull" required placeholder="Ej. 50+12+5MP · OIS" />
+              <small class="help">Se usa tal cual para mostrarla en la ficha.</small>
+            </div>
+            <div class="field">
+              <label for="f-front">Cámara frontal (MP) *</label>
+              <input type="number" id="f-front" required min="1" />
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f-resistance">Resistencia</label>
+              <input type="text" id="f-resistance" placeholder="Ej. IP68 (deja — si no aplica)" />
+            </div>
+            <div class="field">
+              <label for="f-charge">Carga rápida</label>
+              <input type="text" id="f-charge" placeholder="Ej. 45W (deja — si no aplica)" />
+            </div>
+            <div class="field">
+              <label for="f-os">Sistema *</label>
+              <input type="text" id="f-os" required placeholder="Ej. Android 15 · One UI 7" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>COLORES Y PRECIOS</legend>
+          <div id="variants-container"></div>
+          <button type="button" class="btn-add-variant" id="btn-add-variant">+ AGREGAR OTRO COLOR</button>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="btn-cancel-form">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-save-form">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut,
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, getDocs, doc, setDoc, deleteDoc,
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ================== CONFIGURACIÓN ==================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAuBBJAItRgHS1BY9i2SOssrAyTEnVldtc",
+      authDomain: "mini-movil.firebaseapp.com",
+      projectId: "mini-movil",
+      storageBucket: "mini-movil.firebasestorage.app",
+      messagingSenderId: "931142154580",
+      appId: "1:931142154580:web:93a033a94c515af073b0c1",
+    };
+    const CLOUDINARY_CLOUD_NAME = "v8d7pq7v";
+    const CLOUDINARY_UPLOAD_PRESET = "mini-movil-catalogo";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ================== ELEMENTOS ==================
+    const el = {
+      loginView: document.getElementById("login-view"),
+      adminView: document.getElementById("admin-view"),
+      logoutBtn: document.getElementById("logout-btn"),
+      loginEmail: document.getElementById("login-email"),
+      loginPassword: document.getElementById("login-password"),
+      loginBtn: document.getElementById("login-btn"),
+      loginError: document.getElementById("login-error"),
+      searchInput: document.getElementById("search-input"),
+      productList: document.getElementById("product-list"),
+      btnNewProduct: document.getElementById("btn-new-product"),
+      loadingMsg: document.getElementById("loading-msg"),
+
+      formOverlay: document.getElementById("form-overlay"),
+      formTitle: document.getElementById("form-title"),
+      productForm: document.getElementById("product-form"),
+      btnCancelForm: document.getElementById("btn-cancel-form"),
+      variantsContainer: document.getElementById("variants-container"),
+      btnAddVariant: document.getElementById("btn-add-variant"),
+
+      fVitrina: document.getElementById("f-vitrina"),
+      fVitrinaNewWrap: document.getElementById("f-vitrina-new-wrap"),
+      fVitrinaNew: document.getElementById("f-vitrina-new"),
+
+      toast: document.getElementById("toast"),
+    };
+
+    let PRODUCTS = [];
+    let VITRINAS = [];
+    let editingProductId = null; // null = creando uno nuevo
+
+    function showToast(msg, ms = 2600) {
+      el.toast.textContent = msg;
+      el.toast.style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => (el.toast.style.display = "none"), ms);
+    }
+
+    // ================== LOGIN / SESIÓN ==================
+    el.loginBtn.addEventListener("click", async () => {
+      el.loginError.style.display = "none";
+      el.loginBtn.disabled = true;
+      try {
+        await signInWithEmailAndPassword(auth, el.loginEmail.value.trim(), el.loginPassword.value);
+      } catch (err) {
+        el.loginError.textContent = "❌ Correo o contraseña incorrectos.";
+        el.loginError.style.display = "block";
+      } finally {
+        el.loginBtn.disabled = false;
+      }
+    });
+
+    el.logoutBtn.addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        el.loginView.hidden = true;
+        el.adminView.hidden = false;
+        el.logoutBtn.hidden = false;
+        await loadEverything();
+      } else {
+        el.loginView.hidden = false;
+        el.adminView.hidden = true;
+        el.logoutBtn.hidden = true;
+      }
+    });
+
+    // ================== CARGA DE DATOS ==================
+    async function loadEverything() {
+      el.loadingMsg.hidden = false;
+      const [productsSnap, vitrinasSnap] = await Promise.all([
+        getDocs(collection(db, "products")),
+        getDocs(collection(db, "vitrinas")),
+      ]);
+      PRODUCTS = productsSnap.docs.map((d) => d.data());
+      VITRINAS = vitrinasSnap.docs.map((d) => d.data());
+      el.loadingMsg.hidden = true;
+      populateVitrinaSelect();
+      renderProductList();
+    }
+
+    function populateVitrinaSelect() {
+      el.fVitrina.innerHTML =
+        VITRINAS.map((v) => `<option value="${v.id}">${v.title}</option>`).join("") +
+        `<option value="__nueva__">➕ Otra (nueva vitrina)...</option>`;
+    }
+
+    el.fVitrina.addEventListener("change", () => {
+      el.fVitrinaNewWrap.hidden = el.fVitrina.value !== "__nueva__";
+    });
+
+    // ================== LISTA DE PRODUCTOS ==================
+    function renderProductList() {
+      const q = el.searchInput.value.trim().toLowerCase();
+      const filtered = q
+        ? PRODUCTS.filter((p) => p.name.toLowerCase().includes(q))
+        : PRODUCTS;
+
+      if (filtered.length === 0) {
+        el.productList.innerHTML = `<p style="text-align:center; padding:30px; opacity:0.6;">Sin resultados.</p>`;
+        return;
+      }
+
+      el.productList.innerHTML = filtered
+        .map((p) => {
+          const v0 = p.variants && p.variants[0];
+          const colorCount = p.variants ? p.variants.length : 0;
+          return `
+            <div class="product-row" data-id="${p.id}">
+              <img src="${v0 ? v0.image : ""}" alt="${p.name}" onerror="this.style.opacity=0" />
+              <div class="info">
+                <div class="name">${p.name}</div>
+                <div class="meta">${p.vitrina} · ${colorCount} color${colorCount === 1 ? "" : "es"} · desde $${v0 ? v0.price : "?"}</div>
+              </div>
+              <div class="actions">
+                <button class="btn-edit" data-id="${p.id}">Editar</button>
+                <button class="btn-delete" data-id="${p.id}">Eliminar</button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      el.productList.querySelectorAll(".btn-edit").forEach((btn) => {
+        btn.addEventListener("click", () => openForm(btn.dataset.id));
+      });
+      el.productList.querySelectorAll(".btn-delete").forEach((btn) => {
+        btn.addEventListener("click", () => handleDelete(btn.dataset.id));
+      });
+    }
+
+    el.searchInput.addEventListener("input", renderProductList);
+
+    async function handleDelete(id) {
+      const product = PRODUCTS.find((p) => p.id === id);
+      if (!product) return;
+      const sure = confirm(`¿Seguro que quieres eliminar "${product.name}"? Esto no se puede deshacer.`);
+      if (!sure) return;
+      try {
+        await deleteDoc(doc(db, "products", id));
+        PRODUCTS = PRODUCTS.filter((p) => p.id !== id);
+        renderProductList();
+        showToast(`🗑️ "${product.name}" eliminado.`);
+      } catch (err) {
+        showToast("❌ No se pudo eliminar: " + err.message, 4000);
+      }
+    }
+
+    // ================== FORMULARIO: abrir / cerrar ==================
+    el.btnNewProduct.addEventListener("click", () => openForm(null));
+    el.btnCancelForm.addEventListener("click", closeForm);
+    el.formOverlay.addEventListener("click", (e) => {
+      if (e.target === el.formOverlay) closeForm();
+    });
+
+    function closeForm() {
+      el.formOverlay.hidden = true;
+      el.productForm.reset();
+      el.variantsContainer.innerHTML = "";
+    }
+
+    function openForm(id) {
+      editingProductId = id;
+      el.productForm.reset();
+      el.variantsContainer.innerHTML = "";
+      el.fVitrinaNewWrap.hidden = true;
+      populateVitrinaSelect();
+
+      if (id) {
+        const p = PRODUCTS.find((x) => x.id === id);
+        el.formTitle.textContent = "EDITAR CELULAR";
+        document.getElementById("f-name").value = p.name || "";
+        el.fVitrina.value = p.vitrina || "";
+        document.getElementById("f-company").value = p.company || "";
+        document.getElementById("f-tag").value = p.tag || "NUEVO";
+        document.getElementById("f-size").value = p.size || "nano";
+        document.getElementById("f-network").value = p.network || "";
+        document.getElementById("f-processor").value = p.processor || "";
+        document.getElementById("f-ram").value = p.ram || "";
+        document.getElementById("f-storage").value = p.storage || "";
+        document.getElementById("f-batteryMah").value = p.batteryMah || "";
+        document.getElementById("f-screen").value = p.screen || "";
+        document.getElementById("f-refreshRate").value = p.refreshRate || "";
+        document.getElementById("f-cameraFull").value = p.cameraFull || "";
+        document.getElementById("f-front").value = p.front || "";
+        document.getElementById("f-resistance").value = p.resistance || "";
+        document.getElementById("f-charge").value = p.charge || "";
+        document.getElementById("f-os").value = p.os || "";
+        (p.variants || []).forEach((v) => addVariantRow(v));
+      } else {
+        el.formTitle.textContent = "AGREGAR CELULAR";
+        addVariantRow(); // arranca con un color vacío
+      }
+
+      el.formOverlay.hidden = false;
+    }
+
+    // ================== VARIANTES DE COLOR (dinámicas) ==================
+    function addVariantRow(data) {
+      const idx = el.variantsContainer.children.length;
+      const wrap = document.createElement("div");
+      wrap.className = "variant-row";
+      wrap.dataset.index = idx;
+      wrap.innerHTML = `
+        <button type="button" class="remove-variant-btn" title="Quitar este color">✕</button>
+        <div class="grid-3">
+          <div class="field">
+            <label>Nombre del color *</label>
+            <input type="text" class="v-colorName" required placeholder="Ej. AZUL OSCURO" value="${data?.colorName || ""}" />
+          </div>
+          <div class="field">
+            <label>Color (para filtro)</label>
+            <input type="text" class="v-color" placeholder="Ej. azul, negro, verde" value="${data?.color || ""}" />
+            <small class="help">Palabra simple, en minúsculas.</small>
+          </div>
+          <div class="field">
+            <label>Precio (MXN) *</label>
+            <input type="number" class="v-price" required min="0" value="${data?.price ?? ""}" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Color de muestra (hex)</label>
+            <input type="color" class="v-hex" value="${data?.hex || "#1A1A1A"}" style="height:40px; padding:2px;" />
+          </div>
+          <div class="field">
+            <label>Existencias</label>
+            <input type="number" class="v-stock" min="0" value="${data?.stock ?? 1}" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Imagen *</label>
+          <div class="image-mode-toggle">
+            <button type="button" class="mode-filename active">Nombre de archivo (GitHub)</button>
+            <button type="button" class="mode-upload">Subir foto (Cloudinary)</button>
+          </div>
+          <input type="text" class="v-image-filename" placeholder="Ej. Samsung-Galaxy-A57-Azul.png" value="${data?.image && !data.image.startsWith("http") ? data.image : ""}" />
+          <input type="file" class="v-image-file" accept="image/*" style="display:none;" />
+          <input type="hidden" class="v-image-url" value="${data?.image && data.image.startsWith("http") ? data.image : ""}" />
+          <div class="upload-status"></div>
+          <img class="image-preview" src="${data?.image || ""}" style="${data?.image ? "display:block;" : ""}" />
+        </div>
+      `;
+      el.variantsContainer.appendChild(wrap);
+
+      // Botón de quitar color (mínimo debe quedar 1)
+      wrap.querySelector(".remove-variant-btn").addEventListener("click", () => {
+        if (el.variantsContainer.children.length <= 1) {
+          showToast("⚠️ Debe quedar al menos un color.");
+          return;
+        }
+        wrap.remove();
+      });
+
+      // Toggle entre nombre de archivo / subir foto
+      const btnFilename = wrap.querySelector(".mode-filename");
+      const btnUpload = wrap.querySelector(".mode-upload");
+      const inputFilename = wrap.querySelector(".v-image-filename");
+      const inputFile = wrap.querySelector(".v-image-file");
+
+      btnFilename.addEventListener("click", () => {
+        btnFilename.classList.add("active");
+        btnUpload.classList.remove("active");
+        inputFilename.style.display = "";
+        inputFile.style.display = "none";
+      });
+      btnUpload.addEventListener("click", () => {
+        btnUpload.classList.add("active");
+        btnFilename.classList.remove("active");
+        inputFilename.style.display = "none";
+        inputFile.style.display = "";
+      });
+      inputFilename.style.display = "";
+      inputFile.style.display = "none";
+
+      // Subida a Cloudinary (sin firma, directo desde el navegador)
+      inputFile.addEventListener("change", async () => {
+        const file = inputFile.files[0];
+        if (!file) return;
+        const statusEl = wrap.querySelector(".upload-status");
+        const previewEl = wrap.querySelector(".image-preview");
+        const urlInput = wrap.querySelector(".v-image-url");
+
+        statusEl.textContent = "⏳ Subiendo...";
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+        try {
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.secure_url) {
+            urlInput.value = data.secure_url;
+            previewEl.src = data.secure_url;
+            previewEl.style.display = "block";
+            statusEl.textContent = "✅ Imagen subida correctamente.";
+          } else {
+            statusEl.textContent = "❌ Error al subir: " + (data.error?.message || "desconocido");
+          }
+        } catch (err) {
+          statusEl.textContent = "❌ Error de conexión al subir la imagen.";
+        }
+      });
+
+      // Vista previa cuando escriben el nombre de archivo
+      inputFilename.addEventListener("input", () => {
+        const previewEl = wrap.querySelector(".image-preview");
+        if (inputFilename.value.trim()) {
+          previewEl.src = inputFilename.value.trim();
+          previewEl.style.display = "block";
+        } else {
+          previewEl.style.display = "none";
+        }
+      });
+    }
+
+    el.btnAddVariant.addEventListener("click", () => addVariantRow());
+
+    // ================== GUARDAR (crear o editar) ==================
+    el.productForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btnSave = document.getElementById("btn-save-form");
+      btnSave.disabled = true;
+      btnSave.textContent = "Guardando...";
+
+      try {
+        // --- Vitrina (existente o nueva) ---
+        let vitrinaId = el.fVitrina.value;
+        if (vitrinaId === "__nueva__") {
+          const rawName = el.fVitrinaNew.value.trim();
+          if (!rawName) {
+            showToast("⚠️ Escribe el nombre de la nueva vitrina.");
+            btnSave.disabled = false;
+            btnSave.textContent = "Guardar";
+            return;
+          }
+          vitrinaId = rawName
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+          const exists = VITRINAS.some((v) => v.id === vitrinaId);
+          if (!exists) {
+            const newVitrina = { id: vitrinaId, title: rawName.toUpperCase(), subtitle: "" };
+            await setDoc(doc(db, "vitrinas", vitrinaId), newVitrina);
+            VITRINAS.push(newVitrina);
+          }
+        }
+
+        // --- Variantes de color ---
+        const variantRows = [...el.variantsContainer.children];
+        const variants = variantRows.map((row) => {
+          const filenameVal = row.querySelector(".v-image-filename").value.trim();
+          const urlVal = row.querySelector(".v-image-url").value.trim();
+          return {
+            colorName: row.querySelector(".v-colorName").value.trim(),
+            color: row.querySelector(".v-color").value.trim().toLowerCase() || "otro",
+            hex: row.querySelector(".v-hex").value,
+            price: Number(row.querySelector(".v-price").value),
+            stock: Number(row.querySelector(".v-stock").value) || 0,
+            image: urlVal || filenameVal, // prioriza la subida a Cloudinary si existe
+          };
+        });
+
+        if (variants.some((v) => !v.colorName || !v.image || Number.isNaN(v.price))) {
+          showToast("⚠️ Cada color necesita nombre, precio e imagen.");
+          btnSave.disabled = false;
+          btnSave.textContent = "Guardar";
+          return;
+        }
+
+        // --- id del producto: se conserva si se edita, o se genera si es nuevo ---
+        let id = editingProductId;
+        if (!id) {
+          const name = document.getElementById("f-name").value.trim();
+          const base = name
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+          id = base;
+          let suffix = 2;
+          while (PRODUCTS.some((p) => p.id === id)) {
+            id = `${base}-${suffix}`;
+            suffix++;
+          }
+        }
+
+        const maxRank = PRODUCTS.reduce((m, p) => Math.max(m, p.rank || 0), 0);
+        const existing = PRODUCTS.find((p) => p.id === editingProductId);
+
+        const product = {
+          id,
+          vitrina: vitrinaId,
+          name: document.getElementById("f-name").value.trim(),
+          company: document.getElementById("f-company").value.trim(),
+          tag: document.getElementById("f-tag").value,
+          size: document.getElementById("f-size").value,
+          network: document.getElementById("f-network").value.trim(),
+          processor: document.getElementById("f-processor").value.trim(),
+          ram: Number(document.getElementById("f-ram").value),
+          storage: Number(document.getElementById("f-storage").value),
+          batteryMah: document.getElementById("f-batteryMah").value ? Number(document.getElementById("f-batteryMah").value) : null,
+          battery: "2 días",
+          screen: document.getElementById("f-screen").value.trim(),
+          refreshRate: Number(document.getElementById("f-refreshRate").value),
+          cameraMain: Number(document.getElementById("f-cameraFull").value.match(/\d+/)?.[0] || 0),
+          cameraFull: document.getElementById("f-cameraFull").value.trim(),
+          front: Number(document.getElementById("f-front").value),
+          resistance: document.getElementById("f-resistance").value.trim() || "—",
+          charge: document.getElementById("f-charge").value.trim() || "—",
+          os: document.getElementById("f-os").value.trim(),
+          rank: existing ? existing.rank : maxRank + 1,
+          variants,
+        };
+
+        await setDoc(doc(db, "products", id), product);
+
+        const idxExisting = PRODUCTS.findIndex((p) => p.id === id);
+        if (idxExisting >= 0) PRODUCTS[idxExisting] = product;
+        else PRODUCTS.push(product);
+
+        renderProductList();
+        closeForm();
+        showToast(`✅ "${product.name}" guardado correctamente.`);
+      } catch (err) {
+        showToast("❌ Error al guardar: " + err.message, 4500);
+      } finally {
+        btnSave.disabled = false;
+        btnSave.textContent = "Guardar";
+      }
+    });
+  </script>
+</body>
+</html>
