@@ -1256,604 +1256,52 @@
   </button>
 
   <!-- Lógica de la app -->
-  <script>
+  <script type="module">
+    // ==========================================================
+    // FIREBASE — conexión a Firestore
+    // El catálogo (PRODUCTS y VITRINAS) ya NO vive escrito aquí.
+    // Se pide a Firestore al cargar la página (ver loadCatalogFromFirestore
+    // más abajo, y el "ARRANQUE" al final del archivo). Para agregar,
+    // editar o eliminar celulares, usa admin.html — no este archivo.
+    // ==========================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAuBBJAItRgHS1BY9i2SOssrAyTEnVldtc",
+      authDomain: "mini-movil.firebaseapp.com",
+      projectId: "mini-movil",
+      storageBucket: "mini-movil.firebasestorage.app",
+      messagingSenderId: "931142154580",
+      appId: "1:931142154580:web:93a033a94c515af073b0c1"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    // Trae el catálogo completo desde Firestore. Se llama una vez, al
+    // arrancar la página (ver "ARRANQUE" al final de este archivo).
+    async function loadCatalogFromFirestore() {
+      const [productsSnap, vitrinasSnap] = await Promise.all([
+        getDocs(collection(db, "products")),
+        getDocs(collection(db, "vitrinas")),
+      ]);
+
+      PRODUCTS = productsSnap.docs.map((d) => d.data());
+      VITRINAS = vitrinasSnap.docs.map((d) => d.data());
+    }
+
     // ==========================================================
     // DATOS DE LA TIENDA
-    // Edita aquí los productos y reseñas — no necesitas tocar app.js
+    // PRODUCTS y VITRINAS ahora se llenan desde Firestore (ver arriba).
+    // Dejamos las variables declaradas aquí porque el resto del código
+    // las usa por su nombre en todos lados (catálogo, buscador,
+    // comparador, ventanas emergentes, etc.) — nada de eso cambia.
     // ==========================================================
 
-    const PRODUCTS = [
-      // ==================== VITRINA 1 PRINCIPAL — lista oficial ====================
-      {
-        id: "a57", vitrina: "principal", name: "SAMSUNG GALAXY A57 5G 256GB", tag: "TOP GAMA", rank: 1, size: "mini",
-        battery: "2 días",
-        processor: "Exynos 1680 · Octa-Core · hasta 2.9 GHz", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+12+5MP · OIS", front: 12,
-        resistance: "IP68", charge: "45W", network: "5G", os: "Android 16 · One UI 8.5",
-        variants: [
-          { color: "azul", colorName: "AZUL OSCURO", hex: "#1F3A6E", stock: 1, price: 11999, bait: true, image: "samsung-galaxy-a57-256gb-colorazul-oscuro.png" },
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 11999, bait: true, image: "samsung-galaxy-a57256gb-color-gris.png" },
-        ],
-      },
-      {
-        id: "a56", vitrina: "principal", name: "SAMSUNG GALAXY A56 5G 256GB", tag: "PRO", rank: 2, size: "mini",
-        battery: "2 días",
-        processor: "Exynos 1580 · Octa-Core · hasta 2.9 GHz", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+12+5MP · OIS", front: 12,
-        resistance: "IP67", charge: "45W", network: "5G", os: "Android 15 · One UI 7",
-        variants: [
-          { color: "blanco", colorName: "BLANCO", hex: "#F5F5F0", stock: 1, price: 10999, image: "Samsung-Galaxy-A56-5G-256GB-Blanco.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 10999, image: "Samsung-Galaxy-A56-5G-256GB-Negro.png" },
-        ],
-      },
-      {
-        id: "a37", vitrina: "principal", name: "SAMSUNG GALAXY A37 5G 256GB", tag: "PRO", rank: 3, size: "ultra",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.9 GHz", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8+5MP · OIS", front: 12,
-        resistance: "IP67", charge: "45W", network: "5G", os: "Android 16",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 9999, image: "Samsung-Galaxy-A37-5G-256GB-Negro.png" },
-        ],
-      },
-      {
-        id: "edge60", vitrina: "principal", name: "MOTOROLA EDGE 60 FUSION 256GB", tag: "LIMITADO", rank: 4, size: "mini",
-        battery: "2 días",
-        processor: "MediaTek Dimensity 7400 · Octa-Core · hasta 2.6 GHz", ram: 8, storage: 256, batteryMah: 5200,
-        screen: "6.67\" pOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+13MP · OIS", front: 32,
-        resistance: "IP68", charge: "68W", network: "5G", os: "Android 15",
-        variants: [
-          { color: "gris", colorName: "GRIS", hex: "#5B5B66", stock: 1, price: 8999, image: "Motorola-Edge-60%20Fusion-256GB-Gris.png" },
-        ],
-      },
-      {
-        id: "moto-g86", vitrina: "principal", name: "MOTOROLA MOTO G86 5G 256GB", tag: "NUEVO", rank: 5, size: "ultra",
-        battery: "2 días",
-        processor: "MediaTek Dimensity 7300 · Octa-Core · hasta 2.5 GHz", ram: 8, storage: 256, batteryMah: 5200,
-        screen: "6.67\" pOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8MP · OIS", front: 32,
-        resistance: "IP68", charge: "30W", network: "5G", os: "Android 15",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 6999, bait: true, image: "Motorola-Moto-G86-5G-256GB-Bait-Azul.png" },
-          { color: "morado", colorName: "MORADO LILA", hex: "#B08FCE", stock: 1, price: 6999, image: "MotorolaMoto-G86-5G-Morado-Lila.png" },
-        ],
-      },
-      {
-        id: "a26", vitrina: "principal", name: "SAMSUNG GALAXY A26 5G", tag: "BEST SELLER", rank: 6, size: "ultra",
-        battery: "2 días",
-        processor: "Exynos 1380 · Octa-Core · hasta 2.4 GHz", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8+2MP · OIS", front: 13,
-        resistance: "IP67", charge: "25W", network: "5G", os: "Android 15 · One UI 7",
-        variants: [
-          { color: "verde", colorName: "VERDE MENTA", hex: "#8FD3B6", stock: 1, price: 5999, image: "Samsung-Galaxy-A26-5G-Verde-Menta.png" },
-        ],
-      },
-      {
-        id: "a17", vitrina: "principal", name: "SAMSUNG GALAXY A17 128GB", tag: "NUEVO", rank: 7, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.3 GHz", ram: 4, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+5+2MP · OIS", front: 13,
-        resistance: "IP54", charge: "25W", network: "4G LTE", os: "Android 15 · One UI 7",
-        variants: [
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 4499, image: "Samsung-Galaxy-A17-128GB-Gris.png" },
-          { color: "azul", colorName: "AZUL CLARO", hex: "#A9C9E8", stock: 1, price: 4499, image: "Samsung-Galaxy-A17-128GB-AzulClaro.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 4499, image: "Samsung-Galaxy-A17-128GB-Negro.png" },
-          { color: "negro", colorName: "NEGRO · BAIT", hex: "#1A1A1A", stock: 1, price: 4499, bait: true, image: "Samsung-Galaxy-A17-128GB-Negro-bait.png" },
-        ],
-      },
-      {
-        id: "a07", vitrina: "principal", name: "SAMSUNG GALAXY A07 64GB", tag: "ENTRADA", rank: 9, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.3 GHz", ram: 4, storage: 64, batteryMah: 5000,
-        screen: "6.7\" LCD", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+2MP", front: 8,
-        resistance: "—", charge: "25W", network: "4G LTE", os: "Android 15 · One UI 7",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 2198, image: "Samsung-Galaxy-A07-64GB-Negro.png" },
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 2499, image: "Samsung-Galaxy-A07-64GB-Verde.png" },
-          { color: "morado", colorName: "MORADO", hex: "#7B5EA7", stock: 1, price: 2499, image: "Samsung-Galaxy-A07-64GB-Morado.png" },
-        ],
-      },
-      {
-        id: "a07-lte", vitrina: "principal", name: "SAMSUNG GALAXY A07 LTE 64GB", tag: "ENTRADA", rank: 8, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.3 GHz", ram: 4, storage: 64, batteryMah: 5000,
-        screen: "6.7\" LCD", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+2MP", front: 8,
-        resistance: "—", charge: "25W", network: "4G LTE", os: "Android 15 · One UI 7",
-        variants: [
-          { color: "morado", colorName: "VIOLETA", hex: "#8A6BBE", stock: 1, price: 2499, image: "Samsung-Galaxy-A07-LTE-64GB-Violeta.png" },
-        ],
-      },
+    let PRODUCTS = [];
 
-      // ==================== VITRINA CURVA — premium en exhibición especial ====================
-      {
-        id: "moto-g86-curva", vitrina: "curva", name: "MOTOROLA MOTO G86 5G 256GB", tag: "PREMIUM", rank: 10, size: "ultra",
-        battery: "2 días",
-        processor: "MediaTek Dimensity 7300 · Octa-Core · hasta 2.5 GHz", ram: 8, storage: 256, batteryMah: 5200,
-        screen: "6.67\" pOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8MP · OIS", front: 32,
-        resistance: "IP68", charge: "30W", network: "5G", os: "Android 15",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 6999, image: "Motorola-Moto-G86-5G-256GB-Azul.png" },
-        ],
-      },
-      {
-        id: "s24fe", vitrina: "curva", name: "SAMSUNG GALAXY S24 FE 5G 256GB", tag: "PREMIUM", rank: 11, size: "mini",
-        battery: "2 días",
-        processor: "Exynos 2400e · Deca-Core · hasta 3.1 GHz", ram: 8, storage: 256, batteryMah: 4700,
-        screen: "6.7\" Dynamic AMOLED 2X", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+12+8MP · OIS", front: 10,
-        resistance: "IP68", charge: "—", network: "5G", os: "Android",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 16999, image: "Samsung-Galaxy-S24-FE-5G-256GB-Azul.png" },
-        ],
-      },
-      {
-        id: "g17power", vitrina: "curva", name: "MOTOROLA MOTO G17 POWER 256GB", tag: "PREMIUM", rank: 12, size: "mini",
-        battery: "2 días",
-        processor: "MediaTek Helio G81 Extreme · Octa-Core · hasta 2.0 GHz", ram: 8, storage: 256, batteryMah: 6000,
-        screen: "6.72\" LCD FHD+", refreshRate: 60,
-        cameraMain: 50, cameraFull: "50+5MP", front: 32,
-        resistance: "IP64", charge: "30W", network: "4G LTE", os: "Android 15",
-        variants: [
-          { color: "morado", colorName: "ARÁNDANO", hex: "#5B3B6E", stock: 1, price: 6499, image: "Motorola-Moto-G17-Power-256GB-Arándano.png" },
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 6499, image: "Motorola-Moto-G17-Power-256GB-Azul.png" },
-        ],
-      },
-
-      // ==================== VITRINA 2 — más opciones, más marcas ====================
-      {
-        id: "moto-g06", vitrina: "vitrina2", name: "MOTOROLA MOTO G06 256GB", tag: "NUEVO", rank: 13, size: "ultra",
-        battery: "2 días",
-        processor: "MediaTek Helio G81 Extreme · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 256, batteryMah: 5200,
-        screen: "6.88\" HD+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "—", network: "4G LTE", os: "Android 15",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 3499, image: "Motorola-Moto-G06-256GB-Azul.png" },
-        ],
-      },
-      {
-        id: "moto-g15", vitrina: "vitrina2", name: "MOTOROLA MOTO G15 128GB", tag: "NUEVO", rank: 14, size: "ultra",
-        battery: "2 días",
-        processor: "MediaTek Helio G81 Extreme · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 128, batteryMah: 5200,
-        screen: "6.72\" LCD FHD+", refreshRate: 60,
-        cameraMain: 50, cameraFull: "50+5MP", front: 8,
-        resistance: "IP52", charge: "18W", network: "4G LTE", os: "Android 15",
-        variants: [
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 3499, image: "Motorola-Moto-G15-128GB-Gris.png" },
-          { color: "naranja", colorName: "NARANJA", hex: "#E07A2F", stock: 1, price: 3499, image: "Motorola-Moto-G15-128GB-Naranja.png" },
-        ],
-      },
-      {
-        id: "redmi15", vitrina: "vitrina2", name: "XIAOMI REDMI 15 256GB", tag: "NUEVO", rank: 15, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 685 · Octa-Core · hasta 2.8 GHz", ram: 8, storage: 256, batteryMah: 7000,
-        screen: "6.9\" FHD+", refreshRate: 144,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "Xiaomi HyperOS 2",
-        variants: [
-          { color: "dorado", colorName: "DORADO", hex: "#D4AF37", stock: 1, price: 4499, bait: true, image: "Xiaomi-Redmi-15-256GB-Dorado.png" },
-        ],
-      },
-      {
-        id: "redmi15c", vitrina: "vitrina2", name: "XIAOMI REDMI 15C 128GB", tag: "NUEVO", rank: 16, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G81-Ultra · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 128, batteryMah: 6000,
-        screen: "6.9\"", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "Xiaomi HyperOS 2",
-        variants: [
-          { color: "azul", colorName: "AZUL (4G)", hex: "#3A5FCD", stock: 1, price: 2999, image: "Xiaomi-Redmi-15C-4G-128GB-Azul.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 2999, image: "Xiaomi-Redmi-15C-128GB-Negro.png" },
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 2999, image: "Xiaomi-Redmi-15C-128GB-Azul.png" },
-        ],
-      },
-      {
-        id: "redmi-note15-pro-5g", vitrina: "vitrina2", name: "XIAOMI REDMI NOTE 15 PRO 5G 512GB", tag: "TOP GAMA", rank: 17, size: "mini",
-        battery: "2 días",
-        processor: "MediaTek Dimensity 7400-Ultra · Octa-Core · hasta 2.6 GHz", ram: 8, storage: 512, batteryMah: 6580,
-        screen: "6.83\" AMOLED 1.5K", refreshRate: 120,
-        cameraMain: 200, cameraFull: "200+8MP · OIS", front: 20,
-        resistance: "IP66/IP68/IP69/IP69K", charge: "45W", network: "5G", os: "Xiaomi HyperOS 2",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 9999, bait: true, image: "Xiaomi-Redmi-Note-15-Pro-5G-512GB-Negro.png" },
-        ],
-      },
-      {
-        id: "redmi-note15-pro", vitrina: "vitrina2", name: "XIAOMI REDMI NOTE 15 PRO 256GB", tag: "PRO", rank: 18, size: "mini",
-        battery: "2 días",
-        processor: "MediaTek Helio G200-Ultra · Octa-Core · hasta 2.2 GHz", ram: 8, storage: 256, batteryMah: 6500,
-        screen: "6.77\" AMOLED FHD+", refreshRate: 120,
-        cameraMain: 200, cameraFull: "200+8MP · OIS", front: 32,
-        resistance: "IP65", charge: "45W", network: "4G LTE", os: "Xiaomi HyperOS 2",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 7999, bait: true, image: "Xiaomi-Redmi-Note-15-Pro-256GB-Negro.png" },
-        ],
-      },
-      {
-        id: "redmi-note14", vitrina: "vitrina2", name: "XIAOMI REDMI NOTE 14 4G 256GB", tag: "NUEVO", rank: 19, size: "mini",
-        battery: "2 días",
-        processor: "MediaTek Helio G99-Ultra · Octa-Core · hasta 2.2 GHz", ram: 8, storage: 256, batteryMah: 5500,
-        screen: "6.67\" AMOLED", refreshRate: 120,
-        cameraMain: 108, cameraFull: "108+2+2MP", front: 20,
-        resistance: "IP54", charge: "33W", network: "4G LTE", os: "Xiaomi HyperOS",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 5999, image: "Xiaomi-Redmi-Note-14-4G-256GB-Negro.png" },
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 5999, image: "Xiaomi-Redmi-Note-14-4G-256GB-Verde.png" },
-        ],
-      },
-      {
-        id: "redmi15-lte", vitrina: "vitrina2", name: "XIAOMI REDMI 15 LTE 256GB", tag: "NUEVO", rank: 20, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 685 · Octa-Core · hasta 2.8 GHz", ram: 8, storage: 256, batteryMah: 7000,
-        screen: "6.9\" FHD+", refreshRate: 144,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "Xiaomi HyperOS 2",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 4499, image: "Xiaomi-Redmi-15-LTE-256GB-Negro.png" },
-          { color: "morado", colorName: "MORADO", hex: "#7B5EA7", stock: 1, price: 4499, image: "Xiaomi-Redmi-15-LTE-256GB-Morado.png" },
-        ],
-      },
-      {
-        id: "redmi13x", vitrina: "vitrina2", name: "XIAOMI REDMI 13X 4G 256GB", tag: "NUEVO", rank: 21, size: "ultra",
-        battery: "2 días",
-        processor: "MediaTek Helio G91-Ultra · Octa-Core · hasta 2.0 GHz", ram: 8, storage: 256, batteryMah: 5030,
-        screen: "6.79\" FHD+", refreshRate: 90,
-        cameraMain: 108, cameraFull: "108+2MP", front: 13,
-        resistance: "IP53", charge: "33W", network: "4G LTE", os: "Xiaomi HyperOS",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 3999, image: "Xiaomi-Redmi-13X-4G-256GB-Negro.png" },
-        ],
-      },
-      {
-        id: "redmi-a7-pro", vitrina: "vitrina2", name: "XIAOMI REDMI A7 PRO 128GB", tag: "ENTRADA", rank: 22, size: "nano",
-        battery: "2 días",
-        processor: "UNISOC T7250 · Octa-Core · hasta 1.8 GHz", ram: 4, storage: 128, batteryMah: 6000,
-        screen: "6.9\" LCD", refreshRate: 120,
-        cameraMain: 13, cameraFull: "13MP + sensor auxiliar", front: 8,
-        resistance: "—", charge: "15W", network: "4G LTE", os: "Xiaomi HyperOS 3",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 2843, image: "Xiaomi-Redmi-A7-Pro-128GB-Negro.png" },
-        ],
-      },
-      {
-        id: "redmi-a5", vitrina: "vitrina2", name: "XIAOMI REDMI A5 4G 64GB", tag: "ENTRADA", rank: 23, size: "nano",
-        battery: "2 días",
-        processor: "UNISOC T7250 · Octa-Core · hasta 1.8 GHz", ram: 3, storage: 64, batteryMah: 5200,
-        screen: "6.88\"", refreshRate: 120,
-        cameraMain: 32, cameraFull: "32MP", front: 8,
-        resistance: "—", charge: "15W", network: "4G LTE", os: "Android 15 Go Edition",
-        variants: [
-          { color: "azul", colorName: "AZUL DEGRADADO", hex: "#6E9BD1", stock: 1, price: 1999, image: "Xiaomi-Redmi-A5-4G-64GB-Azul-Degradado.png" },
-        ],
-      },
-      {
-        id: "zte-axon70", vitrina: "vitrina2", name: "ZTE AXON 70 256GB", tag: "NUEVO", rank: 24, size: "ultra",
-        battery: "2 días",
-        processor: "Unisoc T616 · Octa-Core · hasta 2.0 GHz", ram: 6, storage: 256, batteryMah: 5000,
-        screen: "6.7\" AMOLED", refreshRate: 120,
-        cameraMain: 108, cameraFull: "108+2MP · IA", front: 16,
-        resistance: "—", charge: "—", network: "4G LTE", os: "Android 14",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 3199, image: "ZTE-Axon-70-256GB-Verde.png" },
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 3199, image: "ZTE-Axon-70-256GB-Gris.png" },
-        ],
-      },
-      {
-        id: "zte-blade-v70", vitrina: "vitrina2", name: "ZTE BLADE V70 256GB", tag: "NUEVO", rank: 25, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\"", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP · IA", front: 16,
-        resistance: "—", charge: "22.5W", network: "4G LTE", os: "Android 15",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 2799, image: "ZTE-Blade-V70-256GB-Verde.png" },
-        ],
-      },
-
-      // ==================== VITRINA PRINCIPAL TELCEL — lista oficial ====================
-      {
-        id: "a36-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A36 5G", tag: "NUEVO", rank: 26, size: "mini",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.4 GHz", ram: 8, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8+5MP · OIS", front: 12,
-        resistance: "IP67", charge: "45W", network: "5G", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "morado", colorName: "LAVANDA", hex: "#C8A8E0", stock: 1, price: 7497, image: "Samsung-Galaxy-A36-5G-Lavanda-Telcel.png" },
-        ],
-      },
-      {
-        id: "a35-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A35 5G 128GB", tag: "NUEVO", rank: 27, size: "mini",
-        battery: "2 días",
-        processor: "Exynos 1380 · Octa-Core · hasta 2.4 GHz", ram: 6, storage: 128, batteryMah: 5000,
-        screen: "6.6\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8+5MP · OIS", front: 13,
-        resistance: "IP67", charge: "25W", network: "5G", os: "Android 14 · One UI 6.1", company: "Telcel",
-        variants: [
-          { color: "morado", colorName: "LILA", hex: "#B08FCE", stock: 1, price: 6997, image: "Samsung-Galaxy-A35-5G-128GB-Lila-Telcel.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 6997, image: "Samsung-Galaxy-A35-5G-128GB-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "a17-5g-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A17 5G 128GB", tag: "NUEVO", rank: 28, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.4 GHz", ram: 4, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+5+2MP · OIS", front: 13,
-        resistance: "IP54", charge: "—", network: "5G", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 4599, image: "Samsung-Galaxy-A17-5G-128GB-Azul-Telcel.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 4599, image: "Samsung-Galaxy-A17-5G-128GB-Negro-Telcel.png" },
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 4599, image: "Samsung-Galaxy-A17-5G-128GB-Gris-Telcel.png" },
-        ],
-      },
-      {
-        id: "a17-4g-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A17 4G 128GB", tag: "NUEVO", rank: 29, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.4 GHz", ram: 4, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+5+2MP · OIS", front: 13,
-        resistance: "IP54", charge: "—", network: "4G LTE", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 4499, image: "Samsung-Galaxy-A17-4G-128GB-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "a07-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A07 64GB", tag: "ENTRADA", rank: 30, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G99 · Octa-Core · hasta 2.2 GHz", ram: 4, storage: 64, batteryMah: 5000,
-        screen: "6.7\" PLS LCD", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+2MP", front: 8,
-        resistance: "IP54", charge: "25W", network: "4G LTE", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 2499, image: "Samsung-Galaxy-A07-64GB-Negro-Telcel.png" },
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 2499, image: "Samsung-Galaxy-A07-64GB-Verde-Telcel.png" },
-        ],
-      },
-      {
-        id: "a56-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A56 5G 256GB", tag: "PRO", rank: 31, size: "mini",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.9 GHz", ram: 8, storage: 256, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+12+5MP · OIS", front: 12,
-        resistance: "IP67", charge: "45W", network: "5G", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 10997, image: "Samsung-Galaxy-A56-5G-256GB-Verde-Telcel.png" },
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 10997, image: "Samsung-Galaxy-A56-5G-256GB-Gris-Telcel.png" },
-          { color: "rosa", colorName: "ROSA", hex: "#E8A9C4", stock: 1, price: 10997, image: "Samsung-Galaxy-A56-5G-256GB-Rosa-Telcel.png" },
-        ],
-      },
-      {
-        id: "a55-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A55 5G 128GB", tag: "NUEVO", rank: 32, size: "mini",
-        battery: "2 días",
-        processor: "Exynos 1480 · Octa-Core · hasta 2.75 GHz", ram: 8, storage: 128, batteryMah: 5000,
-        screen: "6.6\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+12+5MP · OIS", front: 32,
-        resistance: "IP67", charge: "25W", network: "5G", os: "Android 14 · One UI 6.1", company: "Telcel",
-        variants: [
-          { color: "azul", colorName: "AZUL CLARO", hex: "#A9C9E8", stock: 1, price: 8997, image: "Samsung-Galaxy-A55-5G-128GB-Azul-Claro-Telcel.png" },
-        ],
-      },
-      {
-        id: "a26-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A26 5G", tag: "NUEVO", rank: 33, size: "ultra",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 2.4 GHz", ram: 6, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+8+2MP · OIS", front: 13,
-        resistance: "IP67", charge: "25W", network: "5G", os: "Android 15 · One UI 7", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 5999, image: "Samsung-Galaxy-A26-5G-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "a16-telcel", vitrina: "telcel", name: "SAMSUNG GALAXY A16 5G", tag: "NUEVO", rank: 34, size: "nano",
-        battery: "2 días",
-        processor: "Exynos 1330 · Octa-Core · hasta 2.4 GHz", ram: 4, storage: 128, batteryMah: 5000,
-        screen: "6.7\" Super AMOLED", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+5+2MP", front: 13,
-        resistance: "IP54", charge: "—", network: "5G", os: "Android 14 · One UI 6.1", company: "Telcel",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 4797, image: "Samsung-Galaxy-A16-5G-Verde-Telcel.png" },
-        ],
-      },
-
-      // ==================== VITRINA CURVA TELCEL — lista oficial ====================
-      {
-        id: "iphone14-telcel", vitrina: "curva-telcel", name: "APPLE IPHONE 14 128GB", tag: "PREMIUM", rank: 35, size: "mini",
-        battery: "2 días",
-        processor: "Apple A15 Bionic · Hexa-Core", ram: 6, storage: 128, batteryMah: 3279,
-        screen: "6.1\" Super Retina XDR · OLED", refreshRate: 60,
-        cameraMain: 12, cameraFull: "12+12MP · OIS", front: 12,
-        resistance: "IP68", charge: "—", network: "5G", os: "iOS", company: "Telcel",
-        variants: [
-          { color: "blanco", colorName: "BLANCO", hex: "#F2F2F2", stock: 1, price: 14997, image: "Apple-iPhone-14-128GB-Blanco-Telcel.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 14997, image: "Apple-iPhone-14-128GB-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "iphone13-telcel", vitrina: "curva-telcel", name: "APPLE IPHONE 13 128GB", tag: "PREMIUM", rank: 36, size: "mini",
-        battery: "2 días",
-        processor: "Apple A15 Bionic · Hexa-Core", ram: 4, storage: 128, batteryMah: 3227,
-        screen: "6.1\" Super Retina XDR · OLED", refreshRate: 60,
-        cameraMain: 12, cameraFull: "12+12MP · OIS", front: 12,
-        resistance: "IP68", charge: "—", network: "5G", os: "iOS", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 12997, image: "Apple-iPhone-13-128GB-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "zte-blade-v70-max-telcel", vitrina: "curva-telcel", name: "ZTE BLADE V70 MAX 256GB", tag: "NUEVO", rank: 37, size: "nano",
-        battery: "2 días",
-        processor: "Unisoc T7200 · Octa-Core · hasta 1.6 GHz", ram: 4, storage: 256, batteryMah: 6000,
-        screen: "6.9\" HD+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50+2MP · IA", front: 8,
-        resistance: "IP54", charge: "22.5W", network: "4G LTE", os: "Android 15", company: "Telcel",
-        variants: [
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 2997, image: "ZTE-Blade-V70-Max-256GB-Gris-Telcel.png" },
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 2997, image: "ZTE-Blade-V70-Max-256GB-Verde-Telcel.png" },
-        ],
-      },
-      {
-        id: "zte-blade-a35e-telcel", vitrina: "curva-telcel", name: "ZTE BLADE A35E 64GB", tag: "ENTRADA", rank: 38, size: "nano",
-        battery: "2 días",
-        processor: "Octa-Core · hasta 1.6 GHz", ram: 2, storage: 64, batteryMah: 5000,
-        screen: "6.52\" HD+", refreshRate: 60,
-        cameraMain: 8, cameraFull: "8MP · IA", front: 5,
-        resistance: "—", charge: "10W", network: "4G LTE", os: "Android 14 Go Edition", company: "Telcel",
-        variants: [
-          { color: "gris", colorName: "GRIS", hex: "#8E8E93", stock: 1, price: 1799, image: "ZTE-Blade-A35e-64GB-Gris-Telcel.png" },
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 1799, image: "ZTE-Blade-A35e-64GB-Verde-Telcel.png" },
-        ],
-      },
-
-      // ==================== VENTANA 2 TELCEL — lista oficial ====================
-      {
-        id: "moto-g06-128gb-telcel", vitrina: "ventana2-telcel", name: "MOTOROLA MOTO G06 128GB", tag: "ENTRADA", rank: 39, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G81 Extreme · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 128, batteryMah: 5200,
-        screen: "6.88\" HD+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP + sensor auxiliar", front: 5,
-        resistance: "—", charge: "—", network: "4G LTE", os: "Android 15", company: "Telcel",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 2999, image: "Motorola-Moto-G06-128GB-Verde-Telcel.png" },
-          { color: "verde", colorName: "VERDE OLIVA", hex: "#6B7A3E", stock: 1, price: 2999, image: "Motorola-Moto-G06-128GB-Verde-Oliva-Telcel.png" },
-        ],
-      },
-      {
-        id: "moto-g06-64gb-telcel", vitrina: "ventana2-telcel", name: "MOTOROLA MOTO G06 64GB", tag: "ENTRADA", rank: 40, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G81 Extreme · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 64, batteryMah: 5200,
-        screen: "6.88\" HD+", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP + sensor auxiliar", front: 5,
-        resistance: "—", charge: "—", network: "4G LTE", os: "Android 15", company: "Telcel",
-        variants: [
-          { color: "naranja", colorName: "NARANJA", hex: "#E07A2F", stock: 1, price: 2499, image: "Motorola-Moto-G06-64GB-Naranja-Telcel.png" },
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 2499, image: "Motorola-Moto-G06-64GB-Azul-Telcel.png" },
-        ],
-      },
-      {
-        id: "redmi-15c-256gb-telcel", vitrina: "ventana2-telcel", name: "XIAOMI REDMI 15C 256GB", tag: "NUEVO", rank: 41, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G81-Ultra · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 256, batteryMah: 6000,
-        screen: "6.9\" Dot Drop", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "HyperOS 2", company: "Telcel",
-        variants: [
-          { color: "verde", colorName: "VERDE CLARO", hex: "#8FCB8A", stock: 1, price: 3499, image: "Xiaomi-Redmi-15C-256GB-Verde-Claro-Telcel.png" },
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 3499, image: "Xiaomi-Redmi-15C-256GB-Negro-Telcel.png" },
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 3499, image: "Xiaomi-Redmi-15C-256GB-Azul-Telcel.png" },
-        ],
-      },
-      {
-        id: "redmi-15c-128gb-telcel", vitrina: "ventana2-telcel", name: "XIAOMI REDMI 15C 128GB", tag: "NUEVO", rank: 42, size: "nano",
-        battery: "2 días",
-        processor: "MediaTek Helio G81-Ultra · Octa-Core · hasta 2.0 GHz", ram: 4, storage: 128, batteryMah: 6000,
-        screen: "6.9\" Dot Drop", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "HyperOS 2", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 2999, image: "Xiaomi-Redmi-15C-128GB-Negro-Telcel.png" },
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 2999, image: "Xiaomi-Redmi-15C-128GB-Azul-Telcel.png" },
-        ],
-      },
-      {
-        id: "redmi-a5-64gb-telcel", vitrina: "ventana2-telcel", name: "XIAOMI REDMI A5 64GB", tag: "ENTRADA", rank: 43, size: "nano",
-        battery: "2 días",
-        processor: "UNISOC T7250 · Octa-Core · hasta 1.8 GHz", ram: 3, storage: 64, batteryMah: 5200,
-        screen: "6.88\" HD+", refreshRate: 120,
-        cameraMain: 32, cameraFull: "32MP", front: 8,
-        resistance: "—", charge: "15W", network: "4G LTE", os: "Android 15 Go Edition", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 1997, image: "Xiaomi-Redmi-A5-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "redmi-a5-128gb-telcel", vitrina: "ventana2-telcel", name: "XIAOMI REDMI A5 128GB", tag: "ENTRADA", rank: 44, size: "nano",
-        battery: "2 días",
-        processor: "UNISOC T7250 · Octa-Core · hasta 1.8 GHz", ram: 4, storage: 128, batteryMah: 5200,
-        screen: "6.88\" HD+", refreshRate: 120,
-        cameraMain: 32, cameraFull: "32MP", front: 8,
-        resistance: "—", charge: "15W", network: "4G LTE", os: "Android 15 Go Edition", company: "Telcel",
-        variants: [
-          { color: "azul", colorName: "AZUL", hex: "#3A5FCD", stock: 1, price: 2399, image: "Xiaomi-Redmi-A5-128GB-Azul-Telcel.png" },
-        ],
-      },
-      {
-        id: "redmi-15-256gb-telcel", vitrina: "ventana2-telcel", name: "XIAOMI REDMI 15 256GB", tag: "NUEVO", rank: 45, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 685 · Octa-Core · hasta 2.8 GHz", ram: 8, storage: 256, batteryMah: 7000,
-        screen: "6.9\"", refreshRate: 144,
-        cameraMain: 50, cameraFull: "50MP", front: 8,
-        resistance: "IP64", charge: "33W", network: "4G LTE", os: "HyperOS 2", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 4499, image: "Xiaomi-Redmi-15-256GB-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "oppo-a40-telcel", vitrina: "ventana2-telcel", name: "OPPO A40", tag: "NUEVO", rank: 46, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 6s 4G Gen 1 · Octa-Core · hasta 2.1 GHz", ram: 4, storage: 256, batteryMah: 5100,
-        screen: "6.67\" HD+", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50MP", front: 5,
-        resistance: "IP54", charge: "45W", network: "4G LTE", os: "ColorOS", company: "Telcel",
-        variants: [
-          { color: "negro", colorName: "NEGRO", hex: "#1A1A1A", stock: 1, price: 6999, image: "Oppo-A40-Negro-Telcel.png" },
-        ],
-      },
-      {
-        id: "oppo-a5-telcel", vitrina: "ventana2-telcel", name: "OPPO A5", tag: "NUEVO", rank: 47, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 6s 4G Gen 1 · Octa-Core · hasta 2.1 GHz", ram: 4, storage: 256, batteryMah: 6000,
-        screen: "6.67\" LCD", refreshRate: 90,
-        cameraMain: 50, cameraFull: "50+2MP", front: 5,
-        resistance: "—", charge: "45W", network: "4G LTE", os: "ColorOS 15", company: "Telcel",
-        variants: [
-          { color: "verde", colorName: "VERDE", hex: "#4C9A5B", stock: 1, price: 4499, image: "Oppo-A5-Verde-Telcel.png" },
-          { color: "blanco", colorName: "BLANCO", hex: "#F5F5F0", stock: 1, price: 4499, image: "Oppo-A5-color-blanco-Telcel.png" },
-        ],
-      },
-      {
-        id: "oppo-a6k-256gb-telcel", vitrina: "ventana2-telcel", name: "OPPO A6K 256GB", tag: "PRO", rank: 48, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 685 · Octa-Core · hasta 2.8 GHz", ram: 4, storage: 256, batteryMah: 6100,
-        screen: "6.75\" LCD", refreshRate: 120,
-        cameraMain: 50, cameraFull: "50MP + cámara monocromática", front: 5,
-        resistance: "—", charge: "—", network: "4G LTE", os: "ColorOS 15", company: "Telcel",
-        variants: [
-          { color: "blanco", colorName: "BLANCO", hex: "#F5F5F0", stock: 1, price: 7499, image: "OPPO-A6k-256GB-Blanco-Telcel.png" },
-        ],
-      },
-      {
-        id: "oppo-a6x-telcel", vitrina: "ventana2-telcel", name: "OPPO A6X", tag: "NUEVO", rank: 49, size: "mini",
-        battery: "2 días",
-        processor: "Snapdragon 685 · Octa-Core · hasta 2.8 GHz", ram: 4, storage: 256, batteryMah: 6100,
-        screen: "6.75\" LCD", refreshRate: 120,
-        cameraMain: 13, cameraFull: "13MP", front: 5,
-        resistance: "IP64", charge: "—", network: "4G LTE", os: "ColorOS 15", company: "Telcel",
-        variants: [
-          { color: "azul", colorName: "AZUL HIELO", hex: "#A9C9E8", stock: 1, price: 3699, image: "OPPO-A6x-Azul-Hielo-Telcel.png" },
-          { color: "morado", colorName: "MORADO VIOLETA", hex: "#6E5A9E", stock: 1, price: 3699, image: "OPPO-A6x-Morado-Violeta-Telcel.png" },
-        ],
-      },
-    ];
-
-    const VITRINAS = [
-      { id: "principal", title: "VITRINA 1 — PRINCIPAL", subtitle: "Los clásicos de la casa" },
-      { id: "curva", title: "VITRINA CURVA", subtitle: "Los premium en exhibición especial" },
-      { id: "vitrina2", title: "VITRINA 2", subtitle: "Más opciones, más marcas" },
-      { id: "telcel", title: "VITRINA PRINCIPAL TELCEL", subtitle: "Los nuevos equipos Telcel" },
-      { id: "curva-telcel", title: "VITRINA CURVA TELCEL", subtitle: "Los premium Telcel en exhibición especial" },
-      { id: "ventana2-telcel", title: "VENTANA 2 TELCEL", subtitle: "Más opciones Telcel, más marcas" },
-    ];
+    let VITRINAS = [];
 
     // Genera un id único por color para carrito/comparador: "a57__negro"
     function variantId(product, variant) {
@@ -2932,11 +2380,36 @@
     // ==================================================================
     // ARRANQUE
     // ==================================================================
-    renderCatalog();
+    // El carrito, el comparador, las reseñas y las animaciones no
+    // dependen del catálogo, así que arrancan de inmediato.
     renderCart();
     renderCompare();
     renderReviews();
     observeReveals(); // engancha todo lo que ya está en el HTML estático (hero, filtros, footer, etc.)
+
+    // El catálogo sí depende de los datos de Firestore, así que mostramos
+    // un mensaje de "cargando" mientras llegan, y hasta entonces pintamos
+    // las tarjetas de verdad.
+    el.catalogSections.innerHTML = `
+      <div style="text-align:center; padding: 60px 16px; font-weight: 700; opacity: 0.7;">
+        📡 Cargando catálogo...
+      </div>
+    `;
+
+    loadCatalogFromFirestore()
+      .then(() => {
+        renderCatalog();
+        observeReveals(el.catalogSections);
+      })
+      .catch((err) => {
+        console.error("No se pudo cargar el catálogo desde Firestore:", err);
+        el.catalogSections.innerHTML = `
+          <div style="text-align:center; padding: 60px 16px; font-weight: 700;">
+            😕 No se pudo cargar el catálogo. Revisa tu conexión e intenta
+            recargar la página.
+          </div>
+        `;
+      });
   </script>
 </body>
 </html>
