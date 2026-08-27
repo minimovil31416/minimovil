@@ -546,12 +546,13 @@
        --------------------------------------------------------- */
     .compare-picker-overlay {
       position: fixed; inset: 0; background: rgba(10,10,10,0.6);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: flex-start; justify-content: center;
       z-index: 60; padding: 20px; overscroll-behavior: contain;
     }
     .compare-picker-overlay[hidden] { display: none; }
     .compare-picker-box {
       background: var(--bg); width: 100%; max-width: 420px;
+      margin-top: 24px;
       max-height: 80vh; display: flex; flex-direction: column;
       box-shadow: 8px 8px 0 var(--black);
     }
@@ -2168,6 +2169,9 @@
       el.searchOverlay.hidden = false;
       el.searchToggleBtn.classList.add("active");
       lockBodyScroll();
+      // Mostramos el catálogo completo en lista desde que se abre, antes de
+      // que se escriba nada — así se puede elegir a simple vista o buscando.
+      renderSearchSuggestions("");
       // pequeño delay para que el navegador ya haya pintado el input antes de enfocarlo
       // (así el teclado del celular aparece de forma confiable)
       setTimeout(() => el.searchInput.focus(), 50);
@@ -2186,15 +2190,14 @@
 
     function renderSearchSuggestions(query) {
       const q = query.trim();
-      if (!q) {
-        el.searchSuggestions.hidden = true;
-        el.searchSuggestions.innerHTML = "";
-        return;
-      }
 
-      const matches = PRODUCTS.filter((p) =>
-        matchesQuery(`${p.name} ${p.variants.map((v) => v.colorName).join(" ")}`, q)
-      ).slice(0, 6);
+      // Sin texto: mostramos el catálogo completo, para poder elegir un
+      // equipo a simple vista igual que buscando su nombre.
+      const matches = q
+        ? PRODUCTS.filter((p) =>
+            matchesQuery(`${p.name} ${p.variants.map((v) => v.colorName).join(" ")}`, q)
+          )
+        : PRODUCTS;
 
       el.searchSuggestions.hidden = false;
 
