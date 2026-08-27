@@ -550,9 +550,24 @@
       padding: 16px; border-bottom: 4px solid var(--black); background: var(--pink);
     }
     .compare-picker-title { color: white; font-size: 24px; text-shadow: 2px 2px 0 var(--black); }
+    .compare-picker-header-actions { display: flex; align-items: center; gap: 8px; }
+    .compare-picker-search-toggle-btn {
+      width: 28px; height: 28px; background: white; color: var(--black);
+      border: 2px solid var(--black); font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .compare-picker-search-toggle-btn.active { background: var(--yellow); }
     .compare-picker-close {
       width: 28px; height: 28px; background: var(--black); color: white;
       border: 2px solid var(--black); font-weight: 900; cursor: pointer;
+    }
+    .compare-picker-search-wrap {
+      padding: 10px 10px 0; background: var(--bg);
+    }
+    .compare-picker-search-wrap[hidden] { display: none; }
+    .compare-picker-search-wrap .search-input { width: 100%; }
+    .compare-picker-empty {
+      text-align: center; padding: 24px 10px; font-weight: 700; opacity: 0.7;
     }
     .compare-picker-list { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
     .compare-picker-item {
@@ -1100,7 +1115,19 @@
     <div class="compare-picker-box brutal">
       <div class="compare-picker-header">
         <div class="bebas compare-picker-title">ELIGE UN EQUIPO</div>
-        <button class="compare-picker-close" id="compare-picker-close" type="button">✕</button>
+        <div class="compare-picker-header-actions">
+          <button class="compare-picker-search-toggle-btn" id="compare-picker-search-toggle" type="button" aria-label="Buscar">🔍</button>
+          <button class="compare-picker-close" id="compare-picker-close" type="button">✕</button>
+        </div>
+      </div>
+      <div class="compare-picker-search-wrap" id="compare-picker-search-wrap" hidden>
+        <input
+          id="compare-picker-search"
+          class="search-input"
+          type="text"
+          placeholder="🔍 Buscar equipo…"
+          autocomplete="off"
+        />
       </div>
       <div id="compare-picker-list" class="compare-picker-list"></div>
     </div>
@@ -1879,6 +1906,9 @@
       comparePickerOverlay: document.getElementById("compare-picker-overlay"),
       comparePickerList: document.getElementById("compare-picker-list"),
       comparePickerClose: document.getElementById("compare-picker-close"),
+      comparePickerSearch: document.getElementById("compare-picker-search"),
+      comparePickerSearchWrap: document.getElementById("compare-picker-search-wrap"),
+      comparePickerSearchToggle: document.getElementById("compare-picker-search-toggle"),
 
       colorPickerOverlay: document.getElementById("color-picker-overlay"),
       colorPickerTitle: document.getElementById("color-picker-title"),
@@ -2452,15 +2482,27 @@
     // ==================================================================
 
     let compareTargetSlot = null; // índice del slot (0 o 1) que estamos llenando
+    let compareFlatList = []; // lista completa (producto + variante) del picker actualmente abierto
     const MAX_RANK = PRODUCTS.length;
 
-    function openComparePicker(index) {
-      compareTargetSlot = index;
+    // Pinta la lista del selector de equipo, ya filtrada según lo que se
+    // haya escrito en el buscador del modal (búsqueda por palabras sueltas,
+    // igual que la barra de navegación).
+    function renderComparePickerList(query) {
+      const q = (query || "").trim();
+      const filtered = q
+        ? compareFlatList.filter(({ product: p, variant: v }) =>
+            matchesQuery(`${p.name} ${v.colorName}`, q)
+          )
+        : compareFlatList;
 
-      const flatList = PRODUCTS.flatMap((p) => p.variants.map((v) => ({ product: p, variant: v })));
+      if (filtered.length === 0) {
+        el.comparePickerList.innerHTML = `<div class="compare-picker-empty">😕 Sin coincidencias</div>`;
+        return;
+      }
 
-      el.comparePickerList.innerHTML = flatList.map(({ product: p, variant: v }, i) => `
-        <button class="compare-picker-item" type="button" data-index="${i}">
+      el.comparePickerList.innerHTML = filtered.map(({ product: p, variant: v }) => `
+        <button class="compare-picker-item" type="button" data-vid="${variantId(p, v)}">
           <img class="compare-picker-swatch" src="${v.image}" alt="${p.name}"
             onerror="this.outerHTML='<div class=&quot;compare-picker-swatch&quot; style=&quot;background:${v.hex}&quot;></div>'" />
           <div>
@@ -2470,27 +2512,64 @@
         </button>
       `).join("");
 
-      el.comparePickerList.querySelectorAll(".compare-picker-item").forEach((btn, i) => {
+      el.comparePickerList.querySelectorAll(".compare-picker-item").forEach((btn) => {
         btn.addEventListener("click", () => {
-          state.compareSlots[compareTargetSlot] = flatList[i];
+          const entry = filtered.find(({ product: p, variant: v }) => variantId(p, v) === btn.dataset.vid);
+          if (!entry) return;
+          state.compareSlots[compareTargetSlot] = entry;
           renderCompare();
           closeComparePicker();
         });
       });
+    }
+
+    function openComparePicker(index) {
+      compareTargetSlot = index;
+      compareFlatList = PRODUCTS.flatMap((p) => p.variants.map((v) => ({ product: p, variant: v })));
+
+      el.comparePickerSearch.value = "";
+      el.comparePickerSearchWrap.hidden = true;
+      el.comparePickerSearchToggle.classList.remove("active");
+      renderComparePickerList("");
 
       el.comparePickerOverlay.hidden = false;
       lockBodyScroll();
+      // Ya no enfocamos el input al abrir: así se puede navegar y elegir un
+      // equipo a simple vista sin que el teclado se abra solo. El teclado
+      // aparece únicamente al presionar la lupa.
     }
 
     function closeComparePicker() {
       el.comparePickerOverlay.hidden = true;
       unlockBodyScroll();
       compareTargetSlot = null;
+      el.comparePickerSearch.value = "";
+      el.comparePickerSearchWrap.hidden = true;
+      el.comparePickerSearchToggle.classList.remove("active");
+    }
+
+    function toggleComparePickerSearch() {
+      const willShow = el.comparePickerSearchWrap.hidden;
+      el.comparePickerSearchWrap.hidden = !willShow;
+      el.comparePickerSearchToggle.classList.toggle("active", willShow);
+      if (willShow) {
+        setTimeout(() => el.comparePickerSearch.focus(), 50);
+      } else {
+        el.comparePickerSearch.value = "";
+        renderComparePickerList("");
+      }
     }
 
     el.comparePickerClose.addEventListener("click", closeComparePicker);
+    el.comparePickerSearchToggle.addEventListener("click", toggleComparePickerSearch);
     el.comparePickerOverlay.addEventListener("click", (e) => {
       if (e.target === el.comparePickerOverlay) closeComparePicker();
+    });
+    el.comparePickerSearch.addEventListener("input", () => {
+      renderComparePickerList(el.comparePickerSearch.value);
+    });
+    el.comparePickerSearch.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") toggleComparePickerSearch();
     });
 
     el.clearCompareBtn.addEventListener("click", () => {
