@@ -2656,6 +2656,72 @@
       return m ? parseInt(m[1], 10) : null;
     }
 
+    // --- Regla específica para procesadores Apple (iPhone) ---------------
+    // El algoritmo general compara el renglón "PROCESADOR" y el ganador
+    // general usando el "rank" del catálogo (funciona bien entre equipos
+    // Android, que es como está pensado). El problema es que ese "rank" es
+    // solo el orden/prioridad con el que el celular aparece en la tienda,
+    // no un indicador real del chip — y como los iPhone quedaron con un
+    // rank alto (más al fondo del catálogo, en la sección Telcel), siempre
+    // "perdían" el renglón de procesador contra equipos de gama media aunque
+    // el chip A15 Bionic en la práctica rinda mejor.
+    //
+    // Para no tocar el algoritmo Android (que sí funciona), a los Apple les
+    // asignamos aquí una puntuación fija por modelo de chip (0–100, según
+    // benchmarks reales publicados), en vez de inferirla de núcleos/GHz/rank.
+    // Para agregar un iPhone nuevo más adelante, solo hay que sumar su chip
+    // a esta tabla.
+    const APPLE_CHIP_SCORE = {
+      "Apple A15 Bionic": 78, // iPhone 13 y 14 — sigue siendo muy competitivo hoy
+      // "Apple A16 Bionic": 85,
+      // "Apple A17 Pro": 90,
+    };
+
+    // Si el producto es Apple y su chip está en la tabla (o es un Apple no
+    // listado todavía), regresa su puntuación fija. Si no es Apple, regresa
+    // null para indicar "usa el cálculo normal de Android".
+    function appleChipScore(product) {
+      if (!product.processor || !product.processor.includes("Apple")) return null;
+      const knownChip = Object.keys(APPLE_CHIP_SCORE).find((chip) => product.processor.includes(chip));
+      return knownChip ? APPLE_CHIP_SCORE[knownChip] : 70; // valor conservador si el chip Apple aún no está en la tabla
+    }
+
+    // Solo para poder comparar la puntuación fija de Apple contra un equipo
+    // Android, re-expresamos el "rank" de ese Android (sin cambiar cómo se
+    // calcula) en la misma escala de 0–100 que usa la tabla de Apple.
+    function rankAsScore(rank) {
+      if (MAX_RANK <= 1) return 100;
+      return 100 - ((rank - 1) / (MAX_RANK - 1)) * 100;
+    }
+
+    // Ganador del renglón PROCESADOR. Si ninguno de los dos es Apple, se
+    // comporta exactamente igual que antes (rank más bajo gana). Si alguno
+    // es Apple, usa la puntuación fija en vez del rank de catálogo.
+    function processorWinner(a, b) {
+      const appleA = appleChipScore(a);
+      const appleB = appleChipScore(b);
+      if (appleA === null && appleB === null) {
+        return specWinner(a.rank, b.rank, false);
+      }
+      const scoreA = appleA ?? rankAsScore(a.rank);
+      const scoreB = appleB ?? rankAsScore(b.rank);
+      if (scoreA === scoreB) return null;
+      return scoreA > scoreB ? "a" : "b";
+    }
+
+    // Mismo criterio que processorWinner, pero para el "GANADOR GENERAL".
+    function overallWinner(a, b) {
+      const appleA = appleChipScore(a);
+      const appleB = appleChipScore(b);
+      if (appleA === null && appleB === null) {
+        return a.rank < b.rank ? a : b.rank < a.rank ? b : null;
+      }
+      const scoreA = appleA ?? rankAsScore(a.rank);
+      const scoreB = appleB ?? rankAsScore(b.rank);
+      if (scoreA === scoreB) return null;
+      return scoreA > scoreB ? a : b;
+    }
+
     function renderCompareTable(entryA, entryB) {
       const a = entryA.product, b = entryB.product;
       const va = entryA.variant, vb = entryB.variant;
@@ -2663,7 +2729,7 @@
       const rows = [
         { label: "COLOR", va: va.colorName, vb: vb.colorName, w: null },
         { label: "PRECIO", va: money(va.price), vb: money(vb.price), w: specWinner(va.price, vb.price, false) },
-        { label: "PROCESADOR", va: a.processor, vb: b.processor, w: specWinner(a.rank, b.rank, false) },
+        { label: "PROCESADOR", va: a.processor, vb: b.processor, w: processorWinner(a, b) },
         { label: "RAM", va: `${a.ram} GB`, vb: `${b.ram} GB`, w: specWinner(a.ram, b.ram, true) },
         { label: "ALMACENAMIENTO", va: `${a.storage} GB`, vb: `${b.storage} GB`, w: specWinner(a.storage, b.storage, true) },
         { label: "BATERÍA", va: `${a.batteryMah} mAh`, vb: `${b.batteryMah} mAh`, w: specWinner(a.batteryMah, b.batteryMah, true) },
@@ -2676,7 +2742,7 @@
         { label: "SISTEMA", va: a.os, vb: b.os, w: null },
       ];
 
-      const winnerOverall = a.rank < b.rank ? a : b.rank < a.rank ? b : null;
+      const winnerOverall = overallWinner(a, b);
 
       return `
         ${winnerOverall ? `
