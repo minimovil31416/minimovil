@@ -1953,7 +1953,6 @@
 
     let compareTargetSlot = null; // índice del slot (0 o 1) que estamos llenando
     let compareFlatList = []; // lista completa (producto + variante) del picker actualmente abierto
-    const MAX_RANK = PRODUCTS.length;
 
     // Pinta la lista del selector de equipo, ya filtrada según lo que se
     // haya escrito en el buscador del modal (búsqueda por palabras sueltas,
@@ -2069,7 +2068,7 @@
             onerror="this.outerHTML='<div class=&quot;compare-phone-swatch&quot; style=&quot;background:${variant.hex}&quot;>${product.name}</div>'" />
           <div class="compare-info">
             <div class="bebas compare-info-name">${product.name}</div>
-            <div class="compare-info-meta">${variant.colorName} • ${money(variant.price)} MXN • Ranking #${product.rank}/${MAX_RANK}</div>
+            <div class="compare-info-meta">${variant.colorName} • ${money(variant.price)} MXN • Ranking #${product.rank}/${PRODUCTS.length}</div>
             <div class="compare-info-specs">
               ${productSpecsList(product).map((s) => `<span>${s}</span>`).join("")}
             </div>
